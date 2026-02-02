@@ -47,22 +47,21 @@ export default function PhoneScreen() {
   const isValid = phoneNumber.length >= 10;
 
   const handleVerify = async () => {
-    if (!isValid) return;
-    
-    setIsLoading(true);
-    try {
-      // Send OTP via API directly (not using useAuth hook)
-      await authApi.sendOtp(`+1${phoneNumber}`);
-      router.push({
-        pathname: '/(onboarding)/verify-otp',
-        params: { phone: `+1${phoneNumber}` },
-      });
-    } catch (error) {
-      console.error('Send OTP error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  if (!isValid) return;
+  
+  setIsLoading(true);
+  try {
+    await authApi.sendOtp(`+1${phoneNumber}`);
+    router.push({
+      pathname: '/(onboarding)/verify-otp',
+      params: { phone: `+1${phoneNumber}` },
+    });
+  } catch (error) {
+    console.error('Send OTP error:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

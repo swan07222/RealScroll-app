@@ -1,10 +1,8 @@
 // services/auth.service.ts
 import { Config } from '@/constants/config';
 import { authApi } from '@/api';
-import * as mockData from '@/mocks';
+import { mockCurrentUser } from '@/mocks';
 import { 
-  LoginRequest, 
-  VerifyCodeRequest, 
   RegisterRequest, 
   AuthResponse, 
   User,
@@ -12,60 +10,69 @@ import {
 } from '@/types';
 import { storeToken, storeUser, clearAuth, getStoredUser } from '@/utils/storage';
 
-// Simulate network delay for mocks
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 class AuthService {
   private useMocks = Config.USE_MOCKS;
   private mockDelay = Config.MOCK_DELAY;
 
-  async sendVerificationCode(data: LoginRequest): Promise<ApiResponse<{ success: boolean; message: string }>> {
+  async sendVerificationCode(phone: string): Promise<ApiResponse<{ sent: boolean }>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
-      console.log('[Mock] Sending verification code to:', data.phone);
+      console.log('[Mock] Sending verification code to:', phone);
       return {
         success: true,
-        data: { success: true, message: 'Verification code sent' },
+        data: { sent: true },
       };
     }
-    return authApi.sendVerificationCode(data);
+    return authApi.sendOtp(phone);
   }
 
-  async verifyCode(data: VerifyCodeRequest): Promise<ApiResponse<AuthResponse>> {
+  async verifyCode(phone: string, code: string): Promise<ApiResponse<AuthResponse>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
       
-      // Mock: Accept any 6-digit code
-      if (data.code.length !== 6) {
-        throw {
+      if (code.length !== 6) {
+        return {
           success: false,
-          error: {
-            code: 'INVALID_CODE',
-            message: 'Invalid verification code',
-          },
+          data: null as any,
+          error: 'Invalid verification code',
         };
       }
 
       const response: AuthResponse = {
-        user: mockData.currentUser,
+        user: mockCurrentUser,
         token: 'mock-jwt-token-' + Date.now(),
         refreshToken: 'mock-refresh-token-' + Date.now(),
         isNewUser: false,
       };
 
-      // Store auth data
       await storeToken(response.token, response.refreshToken);
       await storeUser(response.user);
 
       return { success: true, data: response };
     }
 
-    const response = await authApi.verifyCode(data);
-    if (response.success) {
-      await storeToken(response.data.token, response.data.refreshToken);
-      await storeUser(response.data.user);
+    const apiResponse = await authApi.verifyOtp(phone, code);
+    if (apiResponse.success) {
+      const authUser = apiResponse.data;
+      await storeToken(authUser.token, authUser.refreshToken);
+      await storeUser(authUser);
+      return {
+        success: true,
+        data: {
+          user: authUser,
+          token: authUser.token,
+          refreshToken: authUser.refreshToken,
+          isNewUser: false,
+        },
+      };
     }
-    return response;
+    return {
+      success: false,
+      data: null as any,
+      error: apiResponse.error,
+    };
   }
 
   async register(data: RegisterRequest): Promise<ApiResponse<AuthResponse>> {
@@ -99,12 +106,33 @@ class AuthService {
       return { success: true, data: response };
     }
 
-    const response = await authApi.register(data);
-    if (response.success) {
-      await storeToken(response.data.token, response.data.refreshToken);
-      await storeUser(response.data.user);
+    const apiResponse = await authApi.register({
+      email: data.email || '',
+      password: '',
+      username: data.username,
+      displayName: data.displayName,
+    });
+    
+    if (apiResponse.success) {
+      const authUser = apiResponse.data;
+      await storeToken(authUser.token, authUser.refreshToken);
+      await storeUser(authUser);
+      return {
+        success: true,
+        data: {
+          user: authUser,
+          token: authUser.token,
+          refreshToken: authUser.refreshToken,
+          isNewUser: true,
+        },
+      };
     }
-    return response;
+    
+    return {
+      success: false,
+      data: null as any,
+      error: apiResponse.error,
+    };
   }
 
   async getCurrentUser(): Promise<ApiResponse<User>> {
@@ -113,7 +141,7 @@ class AuthService {
       const storedUser = await getStoredUser();
       return {
         success: true,
-        data: storedUser || mockData.currentUser,
+        data: storedUser || mockCurrentUser,
       };
     }
     return authApi.getCurrentUser();

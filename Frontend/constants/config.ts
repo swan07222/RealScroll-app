@@ -22,6 +22,8 @@ export const Config = {
   APP_NAME: 'RealScroll',
   VERSION: '1.0.0',
 
+  MOCK_DELAY: 500,
+
   FEATURES: {
     PHONE_AUTH: true,
     SOCIAL_LOGIN: false,

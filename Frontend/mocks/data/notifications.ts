@@ -2,7 +2,8 @@
 import { Notification } from '@/types';
 import { mockUsers } from './users';
 
-export const mockNotifications: Notification[] = [
+// Use let for mutable data
+export let mockNotifications: Notification[] = [
   {
     id: 'notif-1',
     type: 'like',
@@ -54,9 +55,20 @@ export const mockNotifications: Notification[] = [
 ];
 
 export const getMockNotifications = (): Notification[] => {
-  return mockNotifications;
+  return [...mockNotifications];
 };
 
 export const getUnreadCount = (): number => {
   return mockNotifications.filter(n => !n.isRead).length;
+};
+
+export const markAsRead = (notificationId: string): void => {
+  const index = mockNotifications.findIndex(n => n.id === notificationId);
+  if (index !== -1) {
+    mockNotifications[index] = { ...mockNotifications[index], isRead: true };
+  }
+};
+
+export const markAllAsRead = (): void => {
+  mockNotifications = mockNotifications.map(n => ({ ...n, isRead: true }));
 };

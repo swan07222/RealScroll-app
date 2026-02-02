@@ -1,5 +1,5 @@
 // app/(tabs)/search.tsx
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,9 +17,36 @@ import { usePosts } from '@/hooks/use-posts';
 import { UserCard } from '@/components/user/user-card';
 import { PostCard } from '@/components/post/post-card';
 import { User, Post } from '@/types';
-import debounce from 'lodash.debounce';
 
 type TabType = 'users' | 'posts';
+
+// Custom debounce hook
+function useDebounce<T extends (...args: any[]) => any>(
+  callback: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    },
+    [callback, delay]
+  );
+}
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
@@ -27,17 +54,13 @@ export default function SearchScreen() {
   const { users, isLoading: usersLoading, searchUsers, clearSearch } = useSearchUsers();
   const { posts, isLoading: postsLoading, likePost, savePost } = usePosts();
 
-  // Debounced search
-  const debouncedSearch = useCallback(
-    debounce((text: string) => {
-      if (text.trim()) {
-        searchUsers(text);
-      } else {
-        clearSearch();
-      }
-    }, 300),
-    []
-  );
+  const debouncedSearch = useDebounce((text: string) => {
+    if (text.trim()) {
+      searchUsers(text);
+    } else {
+      clearSearch();
+    }
+  }, 300);
 
   const handleSearch = (text: string) => {
     setQuery(text);
@@ -53,7 +76,10 @@ export default function SearchScreen() {
     <UserCard
       user={item}
       showFollowButton
-      onPress={() => router.push(`/(screens)/user/${item.id}`)}
+      onPress={() => router.push({
+        pathname: '/(screens)/user/[id]',
+        params: { id: item.id }
+      })}
     />
   );
 
@@ -62,8 +88,10 @@ export default function SearchScreen() {
   );
 
   const isLoading = activeTab === 'users' ? usersLoading : postsLoading;
-  const data = activeTab === 'users' ? users : posts.filter(p => 
-    p.content.toLowerCase().includes(query.toLowerCase())
+
+  const filteredPosts = posts.filter(p =>
+    p.content.toLowerCase().includes(query.toLowerCase()) ||
+    p.tags.some(t => t.toLowerCase().includes(query.toLowerCase()))
   );
 
   return (
@@ -118,21 +146,32 @@ export default function SearchScreen() {
         <View style={styles.emptyContainer}>
           <Ionicons name="search" size={48} color="#ddd" />
           <Text style={styles.emptyTitle}>Search RealScroll</Text>
-          <Text style={styles.emptyText}>
-            Find people, posts, and more
-          </Text>
+          <Text style={styles.emptyText}>Find people, posts, and more</Text>
         </View>
-      ) : data.length === 0 ? (
+      ) : activeTab === 'users' ? (
+        users.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle}>No users found</Text>
+            <Text style={styles.emptyText}>Try searching for something else</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={users}
+            renderItem={renderUserItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+          />
+        )
+      ) : filteredPosts.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyTitle}>No results found</Text>
-          <Text style={styles.emptyText}>
-            Try searching for something else
-          </Text>
+          <Text style={styles.emptyTitle}>No posts found</Text>
+          <Text style={styles.emptyText}>Try searching for something else</Text>
         </View>
       ) : (
         <FlatList
-          data={data}
-          renderItem={activeTab === 'users' ? renderUserItem : renderPostItem}
+          data={filteredPosts}
+          renderItem={renderPostItem}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}

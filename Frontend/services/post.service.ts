@@ -1,11 +1,18 @@
 // services/post.service.ts
 import { Config } from '@/constants/config';
-import { postsApi } from '@/api';
-import * as mockData from '@/mocks';
+import { postsApi, commentsApi } from '@/api';
+import { 
+  getFeed, 
+  getExplorePosts, 
+  getPostById, 
+  getUserPosts, 
+  generateCommentsList,
+  mockCurrentUser 
+} from '@/mocks';
 import { 
   Post, 
   Comment, 
-  CreatePostRequest, 
+  CreatePostInput,
   FeedResponse,
   PaginatedResponse,
   PaginationParams,
@@ -21,16 +28,23 @@ class PostService {
   async getFeed(params?: PaginationParams): Promise<ApiResponse<FeedResponse>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
-      const feed = mockData.getFeed(params?.cursor, params?.limit);
+      const feed = getFeed(params?.cursor, params?.limit);
       return { success: true, data: feed };
     }
-    return postsApi.getFeed(params);
+    const response = await postsApi.getFeed(params?.page, params?.limit);
+    return {
+      success: response.success,
+      data: {
+        posts: response.data,
+        hasMore: response.pagination?.hasNext || false,
+      },
+    };
   }
 
   async getExplore(params?: PaginationParams): Promise<ApiResponse<FeedResponse>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
-      const explorePosts = mockData.getExplorePosts();
+      const explorePosts = getExplorePosts();
       return {
         success: true,
         data: {
@@ -39,28 +53,36 @@ class PostService {
         },
       };
     }
-    return postsApi.getExplore(params);
+    const response = await postsApi.getFeed(params?.page, params?.limit);
+    return {
+      success: response.success,
+      data: {
+        posts: response.data,
+        hasMore: response.pagination?.hasNext || false,
+      },
+    };
   }
 
   async getPost(postId: string): Promise<ApiResponse<Post>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
-      const post = mockData.getPostById(postId);
+      const post = getPostById(postId);
       if (!post) {
-        throw {
+        return {
           success: false,
-          error: { code: 'NOT_FOUND', message: 'Post not found' },
+          data: null as any,
+          error: 'Post not found',
         };
       }
       return { success: true, data: post };
     }
-    return postsApi.getPost(postId);
+    return postsApi.getPostById(postId);
   }
 
   async getUserPosts(userId: string, params?: PaginationParams): Promise<ApiResponse<FeedResponse>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
-      const userPosts = mockData.getUserPosts(userId);
+      const userPosts = getUserPosts(userId);
       return {
         success: true,
         data: {
@@ -69,36 +91,41 @@ class PostService {
         },
       };
     }
-    return postsApi.getUserPosts(userId, params);
+    const response = await postsApi.getPostsByUserId(userId, params?.page, params?.limit);
+    return {
+      success: response.success,
+      data: {
+        posts: response.data,
+        hasMore: response.pagination?.hasNext || false,
+      },
+    };
   }
 
-  async createPost(data: CreatePostRequest): Promise<ApiResponse<Post>> {
+  async createPost(data: CreatePostInput): Promise<ApiResponse<Post>> {
     if (this.useMocks) {
-      await delay(this.mockDelay * 2); // Simulate longer upload time
+      await delay(this.mockDelay * 2);
       const newPost: Post = {
         id: 'post-' + Date.now(),
-        author: {
-          id: mockData.currentUser.id,
-          username: mockData.currentUser.username,
-          displayName: mockData.currentUser.displayName,
-          avatar: mockData.currentUser.avatar,
-          isVerified: mockData.currentUser.isVerified,
+        userId: mockCurrentUser.id,
+        user: {
+          id: mockCurrentUser.id,
+          username: mockCurrentUser.username,
+          displayName: mockCurrentUser.displayName,
+          avatar: mockCurrentUser.avatar,
+          isVerified: mockCurrentUser.isVerified,
         },
-        caption: data.caption,
-        media: data.media.map((m, i) => ({
-          id: `media-${Date.now()}-${i}`,
-          url: m.uri,
-          type: m.type,
-          width: m.width,
-          height: m.height,
-        })),
+        content: data.content,
+        mediaType: data.mediaType,
+        mediaUrl: data.mediaUri,
         likesCount: 0,
         commentsCount: 0,
         sharesCount: 0,
         isLiked: false,
         isSaved: false,
-        isVerifiedReal: true,
+        isVerified: true,
+        verificationBadge: 'human',
         location: data.location,
+        tags: data.tags || [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -110,25 +137,33 @@ class PostService {
   async likePost(postId: string): Promise<ApiResponse<{ success: boolean; likesCount: number }>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
-      const post = mockData.getPostById(postId);
+      const post = getPostById(postId);
       return {
         success: true,
         data: { success: true, likesCount: (post?.likesCount || 0) + 1 },
       };
     }
-    return postsApi.likePost(postId);
+    const response = await postsApi.likePost(postId);
+    return {
+      success: response.success,
+      data: { success: response.success, likesCount: response.data?.likesCount || 0 },
+    };
   }
 
   async unlikePost(postId: string): Promise<ApiResponse<{ success: boolean; likesCount: number }>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
-      const post = mockData.getPostById(postId);
+      const post = getPostById(postId);
       return {
         success: true,
         data: { success: true, likesCount: Math.max((post?.likesCount || 1) - 1, 0) },
       };
     }
-    return postsApi.unlikePost(postId);
+    const response = await postsApi.likePost(postId);
+    return {
+      success: response.success,
+      data: { success: response.success, likesCount: response.data?.likesCount || 0 },
+    };
   }
 
   async savePost(postId: string): Promise<ApiResponse<{ success: boolean }>> {
@@ -136,7 +171,8 @@ class PostService {
       await delay(this.mockDelay);
       return { success: true, data: { success: true } };
     }
-    return postsApi.savePost(postId);
+    const response = await postsApi.savePost(postId);
+    return { success: response.success, data: { success: response.success } };
   }
 
   async unsavePost(postId: string): Promise<ApiResponse<{ success: boolean }>> {
@@ -144,23 +180,28 @@ class PostService {
       await delay(this.mockDelay);
       return { success: true, data: { success: true } };
     }
-    return postsApi.unsavePost(postId);
+    const response = await postsApi.savePost(postId);
+    return { success: response.success, data: { success: response.success } };
   }
 
-  async getComments(postId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Comment>>> {
+  async getComments(postId: string, params?: PaginationParams): Promise<PaginatedResponse<Comment>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
-      const comments = mockData.generateComments(postId);
+      const comments = generateCommentsList(postId, 10);
       return {
         success: true,
-        data: {
-          items: comments,
-          hasMore: false,
+        data: comments,
+        pagination: {
+          page: params?.page || 1,
+          limit: params?.limit || 20,
           total: comments.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
         },
       };
     }
-    return postsApi.getComments(postId, params);
+    return commentsApi.getCommentsByPostId(postId, params?.page, params?.limit);
   }
 
   async addComment(postId: string, content: string): Promise<ApiResponse<Comment>> {
@@ -169,22 +210,24 @@ class PostService {
       const newComment: Comment = {
         id: 'comment-' + Date.now(),
         postId,
-        author: {
-          id: mockData.currentUser.id,
-          username: mockData.currentUser.username,
-          displayName: mockData.currentUser.displayName,
-          avatar: mockData.currentUser.avatar,
-          isVerified: mockData.currentUser.isVerified,
+        userId: mockCurrentUser.id,
+        user: {
+          id: mockCurrentUser.id,
+          username: mockCurrentUser.username,
+          displayName: mockCurrentUser.displayName,
+          avatar: mockCurrentUser.avatar,
+          isVerified: mockCurrentUser.isVerified,
         },
         content,
         likesCount: 0,
         isLiked: false,
         repliesCount: 0,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
       return { success: true, data: newComment };
     }
-    return postsApi.addComment(postId, content);
+    return commentsApi.createComment({ postId, content });
   }
 
   async deletePost(postId: string): Promise<ApiResponse<{ success: boolean }>> {
@@ -192,7 +235,8 @@ class PostService {
       await delay(this.mockDelay);
       return { success: true, data: { success: true } };
     }
-    return postsApi.deletePost(postId);
+    const response = await postsApi.deletePost(postId);
+    return { success: response.success, data: { success: response.success } };
   }
 }
 

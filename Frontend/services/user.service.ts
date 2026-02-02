@@ -1,7 +1,7 @@
 // services/user.service.ts
 import { Config } from '@/constants/config';
 import { usersApi } from '@/api';
-import * as mockData from '@/mocks';
+import { getUserById, searchUsers as mockSearchUsers, suggestedUsers, mockCurrentUser } from '@/mocks';
 import { 
   UserProfile, 
   UserListItem, 
@@ -20,30 +20,46 @@ class UserService {
   async getProfile(userId: string): Promise<ApiResponse<UserProfile>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
-      const user = mockData.getUserById(userId);
+      const user = getUserById(userId);
       if (!user) {
-        throw {
+        return {
           success: false,
-          error: { code: 'NOT_FOUND', message: 'User not found' },
+          data: null as any,
+          error: 'User not found',
         };
       }
-      return { success: true, data: user };
+      return {
+        success: true,
+        data: {
+          ...user,
+          isFollowing: false,
+          isFollowedBy: false,
+        },
+      };
     }
-    return usersApi.getProfile(userId);
+    return usersApi.getUserProfile(userId);
   }
 
   async updateProfile(data: UpdateProfileRequest): Promise<ApiResponse<UserProfile>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
       const updatedUser: UserProfile = {
-        ...mockData.currentUser,
+        ...mockCurrentUser,
         ...data,
         isFollowing: false,
         isFollowedBy: false,
       };
       return { success: true, data: updatedUser };
     }
-    return usersApi.updateProfile(data);
+    const response = await usersApi.updateProfile(data);
+    return {
+      success: response.success,
+      data: {
+        ...response.data,
+        isFollowing: false,
+        isFollowedBy: false,
+      },
+    };
   }
 
   async followUser(userId: string): Promise<ApiResponse<{ success: boolean }>> {
@@ -52,7 +68,8 @@ class UserService {
       console.log('[Mock] Following user:', userId);
       return { success: true, data: { success: true } };
     }
-    return usersApi.followUser(userId);
+    const response = await usersApi.followUser(userId);
+    return { success: response.success, data: { success: response.data?.following || false } };
   }
 
   async unfollowUser(userId: string): Promise<ApiResponse<{ success: boolean }>> {
@@ -61,61 +78,157 @@ class UserService {
       console.log('[Mock] Unfollowing user:', userId);
       return { success: true, data: { success: true } };
     }
-    return usersApi.unfollowUser(userId);
+    const response = await usersApi.followUser(userId);
+    return { success: response.success, data: { success: !response.data?.following } };
   }
 
-  async getFollowers(userId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<UserListItem>>> {
+  async getFollowers(userId: string, params?: PaginationParams): Promise<PaginatedResponse<UserListItem>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
+      const followers = suggestedUsers.map(u => ({
+        id: u.id,
+        username: u.username,
+        displayName: u.displayName,
+        avatar: u.avatar,
+        bio: u.bio,
+        isVerified: u.isVerified,
+        isFollowing: u.isFollowing,
+      }));
       return {
         success: true,
-        data: {
-          items: mockData.suggestedUsers,
-          hasMore: false,
-          total: mockData.suggestedUsers.length,
+        data: followers,
+        pagination: {
+          page: params?.page || 1,
+          limit: params?.limit || 20,
+          total: followers.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
         },
       };
     }
-    return usersApi.getFollowers(userId, params);
+    const response = await usersApi.getFollowers(userId, params?.page, params?.limit);
+    return {
+      success: response.success,
+      data: response.data.map(u => ({
+        id: u.id,
+        username: u.username,
+        displayName: u.displayName,
+        avatar: u.avatar,
+        bio: u.bio,
+        isVerified: u.isVerified,
+      })),
+      pagination: response.pagination,
+    };
   }
 
-  async getFollowing(userId: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<UserListItem>>> {
+  async getFollowing(userId: string, params?: PaginationParams): Promise<PaginatedResponse<UserListItem>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
+      const following = suggestedUsers.filter(u => u.isFollowing).map(u => ({
+        id: u.id,
+        username: u.username,
+        displayName: u.displayName,
+        avatar: u.avatar,
+        bio: u.bio,
+        isVerified: u.isVerified,
+        isFollowing: true,
+      }));
       return {
         success: true,
-        data: {
-          items: mockData.suggestedUsers.filter((u) => u.isFollowing),
-          hasMore: false,
-          total: mockData.suggestedUsers.filter((u) => u.isFollowing).length,
+        data: following,
+        pagination: {
+          page: params?.page || 1,
+          limit: params?.limit || 20,
+          total: following.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
         },
       };
     }
-    return usersApi.getFollowing(userId, params);
+    const response = await usersApi.getFollowing(userId, params?.page, params?.limit);
+    return {
+      success: response.success,
+      data: response.data.map(u => ({
+        id: u.id,
+        username: u.username,
+        displayName: u.displayName,
+        avatar: u.avatar,
+        bio: u.bio,
+        isVerified: u.isVerified,
+      })),
+      pagination: response.pagination,
+    };
   }
 
-  async searchUsers(query: string, params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<UserListItem>>> {
+  async searchUsers(query: string, params?: PaginationParams): Promise<PaginatedResponse<UserListItem>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
-      const results = mockData.searchUsers(query);
+      const results = mockSearchUsers(query).map(u => ({
+        id: u.id,
+        username: u.username,
+        displayName: u.displayName,
+        avatar: u.avatar,
+        bio: u.bio,
+        isVerified: u.isVerified,
+      }));
       return {
         success: true,
-        data: {
-          items: results,
-          hasMore: false,
+        data: results,
+        pagination: {
+          page: params?.page || 1,
+          limit: params?.limit || 20,
           total: results.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
         },
       };
     }
-    return usersApi.searchUsers(query, params);
+    const response = await usersApi.searchUsers(query, params?.page, params?.limit);
+    return {
+      success: response.success,
+      data: response.data.map(u => ({
+        id: u.id,
+        username: u.username,
+        displayName: u.displayName,
+        avatar: u.avatar,
+        bio: u.bio,
+        isVerified: u.isVerified,
+      })),
+      pagination: response.pagination,
+    };
   }
 
   async getSuggestedUsers(): Promise<ApiResponse<UserListItem[]>> {
     if (this.useMocks) {
       await delay(this.mockDelay);
-      return { success: true, data: mockData.suggestedUsers };
+      return {
+        success: true,
+        data: suggestedUsers.map(u => ({
+          id: u.id,
+          username: u.username,
+          displayName: u.displayName,
+          avatar: u.avatar,
+          bio: u.bio,
+          isVerified: u.isVerified,
+          isFollowing: u.isFollowing,
+        })),
+      };
     }
-    return usersApi.getSuggestedUsers();
+    const response = await usersApi.searchUsers('', 1, 10);
+    return {
+      success: response.success,
+      data: response.data.map(u => ({
+        id: u.id,
+        username: u.username,
+        displayName: u.displayName,
+        avatar: u.avatar,
+        bio: u.bio,
+        isVerified: u.isVerified,
+      })),
+    };
   }
 }
 

@@ -2,7 +2,8 @@
 import { Comment } from '@/types';
 import { mockUsers } from './users';
 
-export const mockComments: Record<string, Comment[]> = {
+// Use let for mutable data
+export let mockComments: Record<string, Comment[]> = {
   'post-1': [
     {
       id: 'comment-1',
@@ -68,9 +69,13 @@ export const getMockCommentsByPostId = (postId: string): Comment[] => {
   return mockComments[postId] || [];
 };
 
-export const generateMockComments = (postId: string, count: number): Comment[] => {
-  return Array.from({ length: count }, (_, i) => {
-    const userIndex = i % mockUsers.length;
+export const generateMockComments = (postId: string, count: number = 5): Comment[] => {
+  if (mockComments[postId] && mockComments[postId].length > 0) {
+    return mockComments[postId];
+  }
+  
+  const comments: Comment[] = Array.from({ length: count }, (_, i) => {
+    const userIndex = (i + 1) % mockUsers.length;
     const user = mockUsers[userIndex];
     return {
       id: `comment-generated-${postId}-${i}`,
@@ -83,12 +88,32 @@ export const generateMockComments = (postId: string, count: number): Comment[] =
         avatar: user.avatar,
         isVerified: user.isVerified,
       },
-      content: `This is comment #${i + 1} on this post!`,
+      content: getRandomCommentContent(i),
       likesCount: Math.floor(Math.random() * 50),
       isLiked: Math.random() > 0.5,
-      repliesCount: Math.floor(Math.random() * 5),
+      repliesCount: Math.floor(Math.random() * 3),
       createdAt: new Date(Date.now() - i * 600000).toISOString(),
       updatedAt: new Date(Date.now() - i * 600000).toISOString(),
     };
   });
+  
+  mockComments[postId] = comments;
+  
+  return comments;
+};
+
+const getRandomCommentContent = (index: number): string => {
+  const comments = [
+    'This is amazing! 🔥',
+    'Love this so much! ❤️',
+    'Incredible shot! 📸',
+    'Where was this taken?',
+    'You\'re so talented!',
+    'This made my day! 😊',
+    'Absolutely stunning!',
+    'Goals! 🙌',
+    'Can\'t stop looking at this!',
+    'Perfect timing!',
+  ];
+  return comments[index % comments.length];
 };

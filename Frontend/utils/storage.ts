@@ -1,5 +1,7 @@
 // utils/storage.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Config } from '@/constants/config';
+import { User } from '@/types';
 
 export const storage = {
   async get(key: string): Promise<string | null> {
@@ -53,3 +55,39 @@ export const storage = {
     }
   },
 };
+
+export async function storeToken(token: string, refreshToken: string): Promise<void> {
+  await storage.set(Config.STORAGE_KEYS.AUTH_TOKEN, token);
+  await storage.set(Config.STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+}
+
+export async function getStoredToken(): Promise<string | null> {
+  return storage.get(Config.STORAGE_KEYS.AUTH_TOKEN);
+}
+
+export async function getStoredRefreshToken(): Promise<string | null> {
+  return storage.get(Config.STORAGE_KEYS.REFRESH_TOKEN);
+}
+
+export async function storeUser(user: User): Promise<void> {
+  await storage.setObject(Config.STORAGE_KEYS.USER, user);
+}
+
+export async function getStoredUser(): Promise<User | null> {
+  return storage.getObject<User>(Config.STORAGE_KEYS.USER);
+}
+
+export async function clearAuth(): Promise<void> {
+  await storage.remove(Config.STORAGE_KEYS.AUTH_TOKEN);
+  await storage.remove(Config.STORAGE_KEYS.REFRESH_TOKEN);
+  await storage.remove(Config.STORAGE_KEYS.USER);
+}
+
+export async function isOnboardingComplete(): Promise<boolean> {
+  const value = await storage.get(Config.STORAGE_KEYS.ONBOARDING_COMPLETE);
+  return value === 'true';
+}
+
+export async function setOnboardingComplete(): Promise<void> {
+  await storage.set(Config.STORAGE_KEYS.ONBOARDING_COMPLETE, 'true');
+}

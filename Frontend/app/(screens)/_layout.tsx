@@ -14,6 +14,8 @@ export default function ScreensLayout() {
       <Stack.Screen name="comments/[postId]" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="edit-profile" />
+      <Stack.Screen name="followers/[userId]" />
+      <Stack.Screen name="following/[userId]" />
     </Stack>
   );
 }

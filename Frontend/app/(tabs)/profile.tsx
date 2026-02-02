@@ -25,7 +25,7 @@ const { width } = Dimensions.get('window');
 const imageSize = (width - 4) / 3;
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { posts, isLoading, fetchPosts } = useUserPosts(user?.id || '');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -50,7 +50,28 @@ export default function ProfileScreen() {
   };
 
   const handlePostPress = (post: Post) => {
-    router.push(`/(screens)/post/${post.id}`);
+    router.push({
+      pathname: '/(screens)/post/[id]',
+      params: { id: post.id }
+    });
+  };
+
+  const handleFollowersPress = () => {
+    if (user?.id) {
+      router.push({
+        pathname: '/(screens)/followers/[userId]',
+        params: { userId: user.id }
+      });
+    }
+  };
+
+  const handleFollowingPress = () => {
+    if (user?.id) {
+      router.push({
+        pathname: '/(screens)/following/[userId]',
+        params: { userId: user.id }
+      });
+    }
   };
 
   if (!user) {
@@ -89,14 +110,14 @@ export default function ProfileScreen() {
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.statItem}
-              onPress={() => router.push(`/(screens)/user/${user.id}/followers`)}
+              onPress={handleFollowersPress}
             >
               <Text style={styles.statNumber}>{formatNumber(user.followersCount)}</Text>
               <Text style={styles.statLabel}>Followers</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.statItem}
-              onPress={() => router.push(`/(screens)/user/${user.id}/following`)}
+              onPress={handleFollowingPress}
             >
               <Text style={styles.statNumber}>{formatNumber(user.followingCount)}</Text>
               <Text style={styles.statLabel}>Following</Text>

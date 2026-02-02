@@ -13,7 +13,6 @@ export const mockCommentHandlers = {
     
     if (comments.length === 0) {
       comments = generateMockComments(postId, 10);
-      mockComments[postId] = comments;
     }
     
     const start = (page - 1) * limit;

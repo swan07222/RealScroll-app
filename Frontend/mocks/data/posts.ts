@@ -1,0 +1,177 @@
+// mocks/data/posts.ts
+import { Post } from '@/types';
+import { mockUsers } from './users';
+
+export const mockPosts: Post[] = [
+  {
+    id: 'post-1',
+    userId: 'user-1',
+    user: {
+      id: 'user-1',
+      username: mockUsers[0].username,
+      displayName: mockUsers[0].displayName,
+      avatar: mockUsers[0].avatar,
+      isVerified: mockUsers[0].isVerified,
+    },
+    content: 'Just captured this amazing sunset at the beach! 🌅 No filters, just pure nature.',
+    mediaType: 'image',
+    mediaUrl: 'https://picsum.photos/800/600?random=1',
+    thumbnailUrl: 'https://picsum.photos/400/300?random=1',
+    likesCount: 234,
+    commentsCount: 45,
+    sharesCount: 12,
+    isLiked: false,
+    isSaved: false,
+    isVerified: true,
+    verificationBadge: 'original',
+    location: 'Santa Monica Beach, CA',
+    tags: ['sunset', 'beach', 'nature', 'nofilter'],
+    createdAt: '2024-12-03T18:30:00Z',
+    updatedAt: '2024-12-03T18:30:00Z',
+  },
+  {
+    id: 'post-2',
+    userId: 'user-2',
+    user: {
+      id: 'user-2',
+      username: mockUsers[1].username,
+      displayName: mockUsers[1].displayName,
+      avatar: mockUsers[1].avatar,
+      isVerified: mockUsers[1].isVerified,
+    },
+    content: 'Working on a new art piece. What do you think? 🎨',
+    mediaType: 'image',
+    mediaUrl: 'https://picsum.photos/800/800?random=2',
+    thumbnailUrl: 'https://picsum.photos/400/400?random=2',
+    likesCount: 567,
+    commentsCount: 89,
+    sharesCount: 34,
+    isLiked: true,
+    isSaved: true,
+    isVerified: true,
+    verificationBadge: 'human',
+    location: 'Art Studio, NYC',
+    tags: ['art', 'painting', 'creative', 'wip'],
+    createdAt: '2024-12-03T14:15:00Z',
+    updatedAt: '2024-12-03T14:15:00Z',
+  },
+  {
+    id: 'post-3',
+    userId: 'user-3',
+    user: {
+      id: 'user-3',
+      username: mockUsers[2].username,
+      displayName: mockUsers[2].displayName,
+      avatar: mockUsers[2].avatar,
+      isVerified: mockUsers[2].isVerified,
+    },
+    content: 'Made this homemade pasta from scratch! 🍝 Recipe in comments.',
+    mediaType: 'image',
+    mediaUrl: 'https://picsum.photos/800/600?random=3',
+    thumbnailUrl: 'https://picsum.photos/400/300?random=3',
+    likesCount: 189,
+    commentsCount: 67,
+    sharesCount: 23,
+    isLiked: false,
+    isSaved: false,
+    isVerified: true,
+    verificationBadge: 'unmodified',
+    location: 'Home Kitchen',
+    tags: ['food', 'pasta', 'homemade', 'cooking'],
+    createdAt: '2024-12-03T12:00:00Z',
+    updatedAt: '2024-12-03T12:00:00Z',
+  },
+  {
+    id: 'post-4',
+    userId: 'user-4',
+    user: {
+      id: 'user-4',
+      username: mockUsers[3].username,
+      displayName: mockUsers[3].displayName,
+      avatar: mockUsers[3].avatar,
+      isVerified: mockUsers[3].isVerified,
+    },
+    content: 'Morning yoga session complete! 🧘‍♀️ Start your day with intention.',
+    mediaType: 'image',
+    mediaUrl: 'https://picsum.photos/600/800?random=4',
+    thumbnailUrl: 'https://picsum.photos/300/400?random=4',
+    likesCount: 890,
+    commentsCount: 123,
+    sharesCount: 56,
+    isLiked: true,
+    isSaved: false,
+    isVerified: true,
+    verificationBadge: 'human',
+    location: 'Zen Studio, LA',
+    tags: ['yoga', 'wellness', 'morning', 'fitness'],
+    createdAt: '2024-12-03T07:30:00Z',
+    updatedAt: '2024-12-03T07:30:00Z',
+  },
+  {
+    id: 'post-5',
+    userId: 'user-5',
+    user: {
+      id: 'user-5',
+      username: mockUsers[4].username,
+      displayName: mockUsers[4].displayName,
+      avatar: mockUsers[4].avatar,
+      isVerified: mockUsers[4].isVerified,
+    },
+    content: 'New setup, who dis? 💻 Finally upgraded my workstation.',
+    mediaType: 'image',
+    mediaUrl: 'https://picsum.photos/800/600?random=5',
+    thumbnailUrl: 'https://picsum.photos/400/300?random=5',
+    likesCount: 456,
+    commentsCount: 78,
+    sharesCount: 19,
+    isLiked: false,
+    isSaved: true,
+    isVerified: true,
+    verificationBadge: 'original',
+    location: 'Home Office',
+    tags: ['tech', 'setup', 'workstation', 'developer'],
+    createdAt: '2024-12-02T20:45:00Z',
+    updatedAt: '2024-12-02T20:45:00Z',
+  },
+];
+
+export const generateMockPosts = (count: number, startIndex: number = 0): Post[] => {
+  return Array.from({ length: count }, (_, i) => {
+    const index = (startIndex + i) % mockUsers.length;
+    const user = mockUsers[index];
+    return {
+      id: `post-generated-${startIndex + i}`,
+      userId: user.id,
+      user: {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        avatar: user.avatar,
+        isVerified: user.isVerified,
+      },
+      content: `This is generated post #${startIndex + i + 1}. Real content, real moments! 📸`,
+      mediaType: 'image' as const,
+      mediaUrl: `https://picsum.photos/800/600?random=${100 + startIndex + i}`,
+      thumbnailUrl: `https://picsum.photos/400/300?random=${100 + startIndex + i}`,
+      likesCount: Math.floor(Math.random() * 1000),
+      commentsCount: Math.floor(Math.random() * 100),
+      sharesCount: Math.floor(Math.random() * 50),
+      isLiked: Math.random() > 0.5,
+      isSaved: Math.random() > 0.7,
+      isVerified: true,
+      verificationBadge: ['human', 'original', 'unmodified'][Math.floor(Math.random() * 3)] as Post['verificationBadge'],
+      location: 'Various Location',
+      tags: ['real', 'authentic', 'moments'],
+      createdAt: new Date(Date.now() - (startIndex + i) * 3600000).toISOString(),
+      updatedAt: new Date(Date.now() - (startIndex + i) * 3600000).toISOString(),
+    };
+  });
+};
+
+export const getMockPostById = (id: string): Post | undefined => {
+  return mockPosts.find(post => post.id === id);
+};
+
+export const getMockPostsByUserId = (userId: string): Post[] => {
+  return mockPosts.filter(post => post.userId === userId);
+};

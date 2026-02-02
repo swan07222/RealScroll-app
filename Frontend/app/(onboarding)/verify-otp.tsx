@@ -13,12 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 const { width } = Dimensions.get('window');
-const OTP_LENGTH = 6;
 
-// Calculate key width based on screen width
-const KEYPAD_HORIZONTAL_PADDING = 30;
-const KEY_GAP = 8;
-const KEY_WIDTH = (width - (KEYPAD_HORIZONTAL_PADDING * 2) - (KEY_GAP * 2)) / 3;
+const OTP_LENGTH = 6;
 
 const KEYPAD = [
   { num: '1', letters: '' },
@@ -51,7 +47,6 @@ export default function VerifyOtpScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
     if (key === 'backspace') {
-      // Find the last filled index and clear it
       const newOtp = [...otp];
       for (let i = OTP_LENGTH - 1; i >= 0; i--) {
         if (newOtp[i] !== '') {
@@ -61,7 +56,6 @@ export default function VerifyOtpScreen() {
       }
       setOtp(newOtp);
     } else {
-      // Find the first empty index and fill it
       const newOtp = [...otp];
       const emptyIndex = newOtp.findIndex(digit => digit === '');
       if (emptyIndex !== -1) {
@@ -92,74 +86,52 @@ export default function VerifyOtpScreen() {
 
   const isComplete = otp.every(digit => digit !== '');
 
-  const renderKey = (key: typeof KEYPAD[0], index: number) => {
-    if (key.blank) {
-      return <View key={index} style={styles.keyBlank} />;
-    }
-
-    if (key.num === 'backspace') {
-      return (
-        <TouchableOpacity
-          key={index}
-          style={styles.keyBackspace}
-          onPress={() => handleKeyPress('backspace')}
-          activeOpacity={0.6}
-        >
-          <Ionicons name="backspace-outline" size={26} color="#000" />
-        </TouchableOpacity>
-      );
-    }
-
-    return (
-      <TouchableOpacity
-        key={index}
-        style={styles.key}
-        onPress={() => handleKeyPress(key.num)}
-        activeOpacity={0.6}
-      >
-        <Text style={styles.keyNum}>{key.num}</Text>
-        {key.letters ? <Text style={styles.keyLetters}>{key.letters}</Text> : null}
-      </TouchableOpacity>
-    );
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Main Content */}
-      <View style={styles.content}>
-        {/* Back Button */}
+      {/* Header */}
+      <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
+      </View>
 
-        {/* Title */}
+      {/* Content */}
+      <View style={styles.content}>
         <Text style={styles.title}>Enter Verification Code</Text>
         <Text style={styles.subtitle}>
           Please check your SMS for the verification code and enter it here to complete the process.
         </Text>
 
-        {/* OTP Input Boxes */}
-        <View style={styles.otpContainer}>
+        {/* OTP Code Boxes */}
+        <View style={styles.codeContainer}>
           {otp.map((digit, index) => (
             <View
               key={index}
               style={[
-                styles.otpBox,
-                digit !== '' && styles.otpBoxFilled,
+                styles.codeDigit,
+                digit !== '' && styles.codeDigitFilled,
               ]}
             >
-              <Text style={styles.otpDigit}>{digit}</Text>
+              <Text style={styles.codeDigitText}>{digit}</Text>
             </View>
           ))}
         </View>
 
         {/* Verify Button */}
         <TouchableOpacity
-          style={[styles.verifyButton, isComplete && styles.verifyButtonActive]}
+          style={[
+            styles.verifyButton,
+            isComplete ? styles.verifyButtonActive : styles.verifyButtonInactive,
+          ]}
           onPress={handleVerify}
           disabled={!isComplete}
         >
-          <Text style={[styles.verifyButtonText, isComplete && styles.verifyButtonTextActive]}>
+          <Text
+            style={[
+              styles.verifyButtonText,
+              isComplete ? styles.verifyButtonTextActive : styles.verifyButtonTextInactive,
+            ]}
+          >
             Verify
           </Text>
         </TouchableOpacity>
@@ -178,19 +150,38 @@ export default function VerifyOtpScreen() {
       </View>
 
       {/* Numpad */}
-      <View style={styles.numpadContainer}>
-        <View style={styles.numpadRow}>
-          {KEYPAD.slice(0, 3).map((key, i) => renderKey(key, i))}
-        </View>
-        <View style={styles.numpadRow}>
-          {KEYPAD.slice(3, 6).map((key, i) => renderKey(key, i + 3))}
-        </View>
-        <View style={styles.numpadRow}>
-          {KEYPAD.slice(6, 9).map((key, i) => renderKey(key, i + 6))}
-        </View>
-        <View style={styles.numpadRow}>
-          {KEYPAD.slice(9, 12).map((key, i) => renderKey(key, i + 9))}
-        </View>
+      <View style={styles.numpad}>
+        {KEYPAD.map((key, index) => {
+          if (key.blank) {
+            return <View key={index} style={styles.numKeyEmpty} />;
+          }
+
+          if (key.num === 'backspace') {
+            return (
+              <TouchableOpacity
+                key={index}
+                style={styles.numKeyEmpty}
+                onPress={() => handleKeyPress('backspace')}
+              >
+                <Ionicons name="backspace-outline" size={26} color="#000" />
+              </TouchableOpacity>
+            );
+          }
+
+          return (
+            <TouchableOpacity
+              key={index}
+              style={styles.numKey}
+              onPress={() => handleKeyPress(key.num)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.numKeyText}>{key.num}</Text>
+              {key.letters ? (
+                <Text style={styles.numKeyLetters}>{key.letters}</Text>
+              ) : null}
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </SafeAreaView>
   );
@@ -199,84 +190,90 @@ export default function VerifyOtpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFCF9',
+    backgroundColor: '#FFFFFF',
   },
-  content: {
-    flex: 1,
+  header: {
     paddingHorizontal: 24,
+    paddingTop: 10,
   },
   backButton: {
-    marginTop: 10,
-    marginBottom: 24,
     width: 40,
     height: 40,
     justifyContent: 'center',
   },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 10,
+  },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    marginBottom: 12,
     color: '#000',
+    marginBottom: 12,
   },
   subtitle: {
     fontSize: 15,
     color: '#86868b',
     lineHeight: 22,
-    marginBottom: 28,
+    marginBottom: 30,
   },
-  otpContainer: {
+  codeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 24,
-    paddingHorizontal: 4,
+    marginBottom: 30,
   },
-  otpBox: {
-    width: (width - 48 - 8 - 50) / 6,
-    height: 56,
-    borderRadius: 12,
+  codeDigit: {
+    width: 48,
+    height: 58,
     borderWidth: 1,
     borderColor: '#E5E5EA',
-    backgroundColor: '#fff',
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#fff',
   },
-  otpBoxFilled: {
+  codeDigitFilled: {
     borderColor: '#000',
     backgroundColor: '#fff',
   },
-  otpDigit: {
-    fontSize: 26,
+  codeDigitText: {
+    fontSize: 28,
     fontWeight: '600',
     color: '#000',
   },
   verifyButton: {
-    borderRadius: 14,
+    width: '100%',
     paddingVertical: 18,
+    borderRadius: 14,
     alignItems: 'center',
+    marginBottom: 20,
+  },
+  verifyButtonActive: {
+    backgroundColor: '#000',
+  },
+  verifyButtonInactive: {
     backgroundColor: '#fafafa',
     borderWidth: 1,
     borderColor: '#f0f0f0',
   },
-  verifyButtonActive: {
-    backgroundColor: '#000',
-    borderColor: '#000',
-  },
   verifyButtonText: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#ccc',
   },
   verifyButtonTextActive: {
     color: '#fff',
   },
+  verifyButtonTextInactive: {
+    color: '#ccc',
+  },
   resendContainer: {
     alignItems: 'center',
-    marginTop: 24,
   },
   resendTimerText: {
     fontSize: 13,
     color: '#888',
-    marginBottom: 8,
+    marginBottom: 5,
   },
   resendTimerBold: {
     fontWeight: '700',
@@ -288,53 +285,48 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   resendLinkDisabled: {
-    color: '#ccc',
+    color: '#000',
   },
-  numpadContainer: {
-    backgroundColor: '#D1D5DB',
-    paddingTop: 12,
-    paddingBottom: 34,
-    paddingHorizontal: KEYPAD_HORIZONTAL_PADDING,
-  },
-  numpadRow: {
+  numpad: {
+    backgroundColor: '#F2F2F7',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    paddingBottom: 40,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 10,
   },
-  key: {
-    width: KEY_WIDTH,
-    height: 46,
-    backgroundColor: '#FCFCFE',
+  numKey: {
+    width: (width - 60 - 50) / 3,
+    height: 48,
+    backgroundColor: '#fff',
     borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 15,
     shadowColor: '#898989',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.8,
     shadowRadius: 0,
     elevation: 2,
   },
-  keyNum: {
-    fontSize: 24,
-    color: '#000',
-    fontWeight: '400',
-  },
-  keyLetters: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#000',
-    letterSpacing: 1.5,
-    marginTop: -2,
-  },
-  keyBlank: {
-    width: KEY_WIDTH,
-    height: 46,
-    backgroundColor: 'transparent',
-  },
-  keyBackspace: {
-    width: KEY_WIDTH,
-    height: 46,
+  numKeyEmpty: {
+    width: (width - 60 - 50) / 3,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 15,
+  },
+  numKeyText: {
+    fontSize: 25,
+    fontWeight: '400',
+    color: '#000',
+  },
+  numKeyLetters: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#000',
+    letterSpacing: 1.5,
+    marginTop: -3,
   },
 });

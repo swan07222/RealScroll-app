@@ -8,6 +8,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Rect, Circle, Line, Path, G } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 
 export default function VerificationErrorScreen() {
@@ -15,7 +16,6 @@ export default function VerificationErrorScreen() {
 
   const handleTryAgain = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    // Go back to phone input screen
     router.replace('/(onboarding)/phone');
   };
 
@@ -24,25 +24,23 @@ export default function VerificationErrorScreen() {
       <View style={styles.content}>
         {/* Phone with X Illustration */}
         <View style={styles.illustrationContainer}>
-          <View style={styles.phoneFrame}>
-            <View style={styles.phoneSpeaker} />
-            <View style={styles.phoneScreen}>
-              <View style={styles.errorCircle}>
-                <Ionicons name="close" size={24} color="#fff" />
-              </View>
-            </View>
-            <View style={styles.phoneButton} />
-          </View>
-          {/* Sparkle lines */}
-          <View style={[styles.sparkle, styles.sparkleTopLeft]} />
-          <View style={[styles.sparkle, styles.sparkleTopRight]} />
+          <Svg width={120} height={120} viewBox="0 0 100 100" fill="none">
+            <G transform="translate(50, 50) rotate(-10) translate(-50, -50)">
+              {/* Phone Frame */}
+              <Rect x={30} y={20} width={40} height={60} rx={4} stroke="#000" strokeWidth={2} fill="#fff" />
+              {/* Red Cross Circle */}
+              <Circle cx={50} cy={50} r={10} fill="#FF3B30" />
+              <Path d="M46 46 l8 8 M54 46 l-8 8" stroke="#fff" strokeWidth={2} />
+              {/* Radiating Lines Red */}
+              <Line x1={25} y1={15} x2={35} y2={25} stroke="#FF3B30" strokeWidth={2} />
+              <Line x1={75} y1={15} x2={65} y2={25} stroke="#FF3B30" strokeWidth={2} />
+            </G>
+          </Svg>
         </View>
 
         <Text style={styles.statusText}>Error Verifying Number</Text>
         
         <Ionicons name="alert-circle" size={32} color="#FF3B30" style={styles.errorIcon} />
-        
-        {error && <Text style={styles.errorMessage}>{error}</Text>}
       </View>
 
       <View style={styles.bottomContainer}>
@@ -57,7 +55,7 @@ export default function VerificationErrorScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFCF9',
+    backgroundColor: '#FFFFFF',
   },
   content: {
     flex: 1,
@@ -66,78 +64,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   illustrationContainer: {
-    marginBottom: 32,
-    position: 'relative',
-  },
-  phoneFrame: {
-    width: 80,
-    height: 140,
-    borderWidth: 3,
-    borderColor: '#000',
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    padding: 8,
-    transform: [{ rotate: '-10deg' }],
-  },
-  phoneSpeaker: {
-    width: 30,
-    height: 4,
-    backgroundColor: '#000',
-    borderRadius: 2,
-    marginBottom: 8,
-  },
-  phoneScreen: {
-    flex: 1,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  errorCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FF3B30',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  phoneButton: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#000',
-    borderRadius: 2,
-    marginTop: 8,
-  },
-  sparkle: {
-    position: 'absolute',
-    width: 3,
-    height: 12,
-    backgroundColor: '#FF3B30',
-  },
-  sparkleTopLeft: {
-    top: -5,
-    left: 5,
-    transform: [{ rotate: '-30deg' }],
-  },
-  sparkleTopRight: {
-    top: 0,
-    right: -5,
-    transform: [{ rotate: '30deg' }],
+    marginBottom: 24,
   },
   statusText: {
     fontSize: 20,
     fontWeight: '700',
     color: '#000',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   errorIcon: {
     marginTop: 10,
-  },
-  errorMessage: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 16,
-    textAlign: 'center',
   },
   bottomContainer: {
     paddingHorizontal: 24,

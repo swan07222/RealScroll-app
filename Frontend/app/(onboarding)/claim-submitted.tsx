@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Svg, Rect, Circle, Path, Line, G } from 'react-native-svg';
+import Svg, { Rect, Circle, Path, Line, G } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 
 export default function ClaimSubmittedScreen() {
@@ -74,11 +74,19 @@ export default function ClaimSubmittedScreen() {
 
         {/* Complete Button */}
         <TouchableOpacity
-          style={[styles.completeButton, isChecked && styles.completeButtonActive]}
+          style={[
+            styles.completeButton,
+            isChecked ? styles.completeButtonActive : styles.completeButtonInactive,
+          ]}
           onPress={handleComplete}
           disabled={!isChecked}
         >
-          <Text style={[styles.completeButtonText, isChecked && styles.completeButtonTextActive]}>
+          <Text
+            style={[
+              styles.completeButtonText,
+              isChecked ? styles.completeButtonTextActive : styles.completeButtonTextInactive,
+            ]}
+          >
             Complete
           </Text>
         </TouchableOpacity>
@@ -90,7 +98,7 @@ export default function ClaimSubmittedScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFCF9',
+    backgroundColor: '#FFFFFF',
   },
   content: {
     flex: 1,
@@ -105,7 +113,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: '#000',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   checkIcon: {
     marginTop: 10,
@@ -120,7 +128,7 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'center',
     lineHeight: 20,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   infoBold: {
     fontWeight: '700',
@@ -129,16 +137,16 @@ const styles = StyleSheet.create({
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 24,
+    gap: 8,
+    marginBottom: 20,
   },
   checkboxLabel: {
     fontSize: 14,
     color: '#86868b',
   },
   checkbox: {
-    width: 22,
-    height: 22,
+    width: 20,
+    height: 20,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 4,
@@ -151,22 +159,28 @@ const styles = StyleSheet.create({
   },
   completeButton: {
     width: '100%',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-    borderRadius: 14,
     paddingVertical: 18,
+    borderRadius: 14,
     alignItems: 'center',
   },
   completeButtonActive: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
     borderColor: '#E5E5EA',
+  },
+  completeButtonInactive: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   completeButtonText: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#ccc',
   },
   completeButtonTextActive: {
     color: '#000',
+  },
+  completeButtonTextInactive: {
+    color: '#ccc',
   },
 });

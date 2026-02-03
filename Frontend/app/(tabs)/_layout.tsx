@@ -1,11 +1,66 @@
 // app/(tabs)/_layout.tsx
+import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, StyleSheet } from 'react-native';
 import { useNotifications } from '@/hooks/use-notifications';
 
-export default function TabLayout() {
+type IconName = keyof typeof Ionicons.glyphMap;
+
+interface TabIconProps {
+  color: string;
+  focused: boolean;
+}
+
+export default function TabLayout(): React.ReactElement {
   const { unreadCount } = useNotifications();
+
+  const renderHomeIcon = ({ color, focused }: TabIconProps): React.ReactElement => (
+    <Ionicons
+      name={focused ? 'home' : 'home-outline'}
+      size={24}
+      color={color}
+    />
+  );
+
+  const renderSearchIcon = ({ color, focused }: TabIconProps): React.ReactElement => (
+    <Ionicons
+      name={focused ? 'search' : 'search-outline'}
+      size={24}
+      color={color}
+    />
+  );
+
+  const renderCreateIcon = (): React.ReactElement => (
+    <View style={styles.createButton}>
+      <Ionicons name="add" size={28} color="#fff" />
+    </View>
+  );
+
+  const renderNotificationsIcon = ({ color, focused }: TabIconProps): React.ReactElement => (
+    <View>
+      <Ionicons
+        name={focused ? 'heart' : 'heart-outline'}
+        size={24}
+        color={color}
+      />
+      {unreadCount > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderProfileIcon = ({ color, focused }: TabIconProps): React.ReactElement => (
+    <Ionicons
+      name={focused ? 'person' : 'person-outline'}
+      size={24}
+      color={color}
+    />
+  );
 
   return (
     <Tabs
@@ -20,68 +75,31 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'home' : 'home-outline'}
-              size={24}
-              color={color}
-            />
-          ),
+          tabBarIcon: renderHomeIcon,
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'search' : 'search-outline'}
-              size={24}
-              color={color}
-            />
-          ),
+          tabBarIcon: renderSearchIcon,
         }}
       />
       <Tabs.Screen
         name="create"
         options={{
-          tabBarIcon: ({ color }) => (
-            <View style={styles.createButton}>
-              <Ionicons name="add" size={28} color="#fff" />
-            </View>
-          ),
+          tabBarIcon: renderCreateIcon,
         }}
       />
       <Tabs.Screen
         name="notifications"
         options={{
-          tabBarIcon: ({ color, focused }) => (
-            <View>
-              <Ionicons
-                name={focused ? 'heart' : 'heart-outline'}
-                size={24}
-                color={color}
-              />
-              {unreadCount > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </Text>
-                </View>
-              )}
-            </View>
-          ),
+          tabBarIcon: renderNotificationsIcon,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'person' : 'person-outline'}
-              size={24}
-              color={color}
-            />
-          ),
+          tabBarIcon: renderProfileIcon,
         }}
       />
     </Tabs>

@@ -7,105 +7,116 @@ import {
   TouchableOpacity,
   Dimensions,
   FlatList,
-  Animated,
+  ViewToken,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { storage } from '@/utils/storage';
 import { Config } from '@/constants/config';
 
 const { width } = Dimensions.get('window');
 
-type Slide = {
+interface Slide {
   id: string;
   title: string;
   description: string;
-  image: string; // Changed to string URL
-};
+}
 
 const SLIDES: Slide[] = [
   {
     id: '1',
     title: 'The future of real\nsocial media.',
-    description:
-      'Every post is verified human. No AI content. Just real moments from real people.',
-    image: 'https://picsum.photos/400/400?random=1',
+    description: 'Every post is verified human. No AI content. Just real moments from real people.',
   },
   {
     id: '2',
     title: 'Scroll confidently.\nEverything is real.',
-    description:
-      'We scan every upload to block AI and fake media so what you see is real.',
-    image: 'https://picsum.photos/400/400?random=2',
+    description: 'We scan every upload to block AI and fake media so what you see is real.',
   },
   {
     id: '3',
     title: 'Authentic posts.\nVerified people.',
-    description:
-      'Bringing social media back to real people, real moments, and content you can trust.',
-    image: 'https://picsum.photos/400/400?random=3',
+    description: 'Bringing social media back to real people, real moments, and content you can trust.',
   },
 ];
 
+interface ViewableItemsChanged {
+  viewableItems: ViewToken[];
+  changed: ViewToken[];
+}
+
 export default function SlidesScreen() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
-  const scrollX = useRef(new Animated.Value(0)).current;
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const flatListRef = useRef<FlatList<Slide>>(null);
 
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-    { useNativeDriver: false }
-  );
-
-  const handleViewableItemsChanged = useRef(({ viewableItems }: any) => {
-    if (viewableItems.length > 0) {
-      setCurrentIndex(viewableItems[0].index || 0);
+  const handleViewableItemsChanged = useRef(
+    ({ viewableItems }: ViewableItemsChanged): void => {
+      if (viewableItems.length > 0 && viewableItems[0].index !== null) {
+        setCurrentIndex(viewableItems[0].index);
+      }
     }
-  }).current;
+  ).current;
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
   }).current;
 
-  const completeOnboarding = async () => {
+  const completeOnboarding = async (): Promise<void> => {
     await storage.set(Config.STORAGE_KEYS.ONBOARDING_COMPLETE, 'true');
   };
 
-  const handleGetStarted = async () => {
-    await completeOnboarding();
-    router.replace('/(tabs)');
+  const handleGetStarted = (): void => {
+    router.push('/(onboarding)/language');
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (): Promise<void> => {
     await completeOnboarding();
     router.replace('/(auth)/login');
   };
 
-  const handleSkip = async () => {
+  const handleSkip = async (): Promise<void> => {
     await completeOnboarding();
     router.replace('/(tabs)');
   };
 
-  const renderSlide = ({ item }: { item: Slide }) => (
+  const renderSlide = ({ item }: { item: Slide }): React.ReactElement => (
     <View style={styles.slide}>
+      {/* Illustration */}
       <View style={styles.illustrationContainer}>
-        <Image
-          source={{ uri: item.image }}
-          style={styles.illustration}
-          contentFit="contain"
-        />
+        <View style={styles.doodleCard}>
+          <View style={styles.avatarCircle}>
+            <View style={styles.avatarInner} />
+          </View>
+          <View style={styles.line1} />
+          <View style={styles.line2} />
+        </View>
+        {/* Sparkle */}
+        <View style={styles.sparkleContainer}>
+          <Ionicons name="flash" size={24} color="#22C55E" />
+        </View>
       </View>
     </View>
   );
 
+  const renderDot = (_: Slide, index: number): React.ReactElement => (
+    <View
+      key={`dot-${index}`}
+      style={[
+        styles.dot,
+        currentIndex === index ? styles.dotActive : styles.dotInactive,
+      ]}
+    />
+  );
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
-          <Ionicons name="cube" size={18} color="#000" />
+          <View style={styles.logoIcon}>
+            <Ionicons name="checkmark" size={14} color="#fff" />
+          </View>
           <Text style={styles.logoText}>RealScroll</Text>
         </View>
         <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
@@ -118,11 +129,10 @@ export default function SlidesScreen() {
         ref={flatListRef}
         data={SLIDES}
         renderItem={renderSlide}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item: Slide): string => item.id}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
         onViewableItemsChanged={handleViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         style={styles.flatList}
@@ -132,12 +142,7 @@ export default function SlidesScreen() {
       <View style={styles.bottomContent}>
         {/* Dots */}
         <View style={styles.dotsContainer}>
-          {SLIDES.map((_, index) => (
-            <View
-              key={index}
-              style={[styles.dot, currentIndex === index && styles.dotActive]}
-            />
-          ))}
+          {SLIDES.map(renderDot)}
         </View>
 
         {/* Title & Description */}
@@ -152,9 +157,11 @@ export default function SlidesScreen() {
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
           <Text style={styles.loginButtonText}>Login</Text>
         </TouchableOpacity>
+      </View>
 
-        {/* Watermark */}
-        <Text style={styles.watermark}>Real people. Real moments.</Text>
+      {/* Home Indicator */}
+      <View style={styles.homeIndicator}>
+        <View style={styles.indicator} />
       </View>
     </SafeAreaView>
   );
@@ -163,24 +170,31 @@ export default function SlidesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFCF9',
+    backgroundColor: '#FAFAF9',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 10,
+    paddingTop: 8,
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
+  logoIcon: {
+    width: 24,
+    height: 24,
+    backgroundColor: '#000',
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   logoText: {
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: -0.5,
+    fontSize: 18,
+    fontWeight: '700',
     color: '#000',
   },
   skipButton: {
@@ -189,7 +203,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: '#F3F4F6',
   },
   skipButtonText: {
     fontSize: 12,
@@ -204,17 +218,59 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 60,
   },
   illustrationContainer: {
-    width: 280,
-    height: 280,
-    justifyContent: 'center',
+    width: 200,
+    height: 200,
     alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
-  illustration: {
-    width: '100%',
-    height: '100%',
+  doodleCard: {
+    width: 120,
+    height: 180,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#000',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    transform: [{ rotate: '-10deg' }],
+  },
+  avatarCircle: {
+    width: 60,
+    height: 60,
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  avatarInner: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 20,
+  },
+  line1: {
+    width: 70,
+    height: 4,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 2,
+    marginBottom: 8,
+  },
+  line2: {
+    width: 50,
+    height: 4,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 2,
+  },
+  sparkleContainer: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
   },
   bottomContent: {
     paddingHorizontal: 24,
@@ -223,24 +279,25 @@ const styles = StyleSheet.create({
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 6,
-    marginBottom: 25,
+    gap: 8,
+    marginBottom: 24,
   },
   dot: {
-    width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#ddd',
   },
   dotActive: {
-    width: 20,
-    borderRadius: 10,
+    width: 24,
     backgroundColor: '#000',
   },
+  dotInactive: {
+    width: 6,
+    backgroundColor: '#D1D5DB',
+  },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '800',
-    lineHeight: 34,
+    lineHeight: 38,
     letterSpacing: -1,
     textAlign: 'center',
     marginBottom: 12,
@@ -248,16 +305,16 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 14,
-    color: '#888',
+    color: '#6B7280',
     textAlign: 'center',
     lineHeight: 21,
-    paddingHorizontal: 20,
-    marginBottom: 30,
+    paddingHorizontal: 16,
+    marginBottom: 32,
   },
   getStartedButton: {
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#f0f0f0',
+    borderColor: '#F3F4F6',
     borderRadius: 50,
     paddingVertical: 16,
     alignItems: 'center',
@@ -269,28 +326,27 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   getStartedButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#000',
   },
   loginButton: {
-    backgroundColor: '#FFFCF9',
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-    borderRadius: 50,
     paddingVertical: 16,
     alignItems: 'center',
-    marginBottom: 5,
   },
   loginButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '500',
     color: '#000',
   },
-  watermark: {
-    textAlign: 'center',
-    fontSize: 10,
-    color: '#d1d1d1',
-    marginTop: 15,
+  homeIndicator: {
+    alignItems: 'center',
+    paddingBottom: 8,
+  },
+  indicator: {
+    width: 130,
+    height: 5,
+    backgroundColor: '#000',
+    borderRadius: 3,
   },
 });

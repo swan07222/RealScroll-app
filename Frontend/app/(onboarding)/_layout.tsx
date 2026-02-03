@@ -6,11 +6,15 @@ export default function OnboardingLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: '#FFFCF9' },
+        contentStyle: { backgroundColor: '#FAFAF9' },
         animation: 'slide_from_right',
       }}
     >
       <Stack.Screen name="index" />
+      <Stack.Screen name="splash" />
+      <Stack.Screen name="splash-loading" />
+      <Stack.Screen name="slides" />
+      <Stack.Screen name="language" />
       <Stack.Screen name="welcome" />
       <Stack.Screen name="phone" />
       <Stack.Screen name="verify-otp" />
@@ -20,7 +24,6 @@ export default function OnboardingLayout() {
       <Stack.Screen name="setup-username" />
       <Stack.Screen name="claim-username" />
       <Stack.Screen name="claim-submitted" />
-      <Stack.Screen name="slides" />
     </Stack>
   );
 }

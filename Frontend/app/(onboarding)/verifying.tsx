@@ -1,14 +1,10 @@
 // app/(onboarding)/verifying.tsx
 import { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import Svg, { Path, Circle, Line, G } from 'react-native-svg';
+import Svg, { Path, Rect, Circle, Line, G } from 'react-native-svg';
+import { HomeIndicator } from '@/components/onboarding/home-indicator';
+import { DynamicIsland } from '@/components/onboarding/dynamic-island';
 import { authApi } from '@/api';
 import { storage } from '@/utils/storage';
 import { Config } from '@/constants/config';
@@ -22,8 +18,7 @@ export default function VerifyingScreen() {
 
   const verifyCode = async () => {
     try {
-      // Simulate verification delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 2500));
       
       const response = await authApi.verifyOtp(phone || '', otp || '');
       
@@ -48,53 +43,87 @@ export default function VerifyingScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <DynamicIsland />
+
       <View style={styles.content}>
-        {/* Face Scan Illustration */}
+        {/* Face ID Illustration */}
         <View style={styles.illustrationContainer}>
-          <Svg width={120} height={120} viewBox="0 0 100 100" fill="none">
-            {/* Head */}
-            <Path
-              d="M50 25c-12 0-22 10-22 22v5c0 8 15 15 22 15s22-7 22-15v-5c0-12-10-22-22-22z"
-              stroke="#000"
+          <Svg width={96} height={120} viewBox="0 0 96 120" fill="none">
+            {/* Face outline */}
+            <Rect 
+              x={16} 
+              y={20} 
+              width={64} 
+              height={80} 
+              rx={10}
+              stroke="#000" 
               strokeWidth={2}
+              fill="#fff"
             />
-            <Path
-              d="M28 70c0-10 8-15 22-15s22 5 22 15"
-              stroke="#000"
-              strokeWidth={2}
+            {/* Face circle */}
+            <Circle cx={48} cy={50} r={16} stroke="#000" strokeWidth={1.5} />
+            {/* Shoulders */}
+            <Path 
+              d="M28 85 Q48 70 68 85" 
+              stroke="#000" 
+              strokeWidth={1.5}
+              fill="none"
             />
-            {/* Brackets */}
-            <Path
-              d="M20 25 h-10 v50 h10"
-              stroke="#000"
+            {/* Scan brackets */}
+            <Path 
+              d="M6 30 L6 20 L16 20" 
+              stroke="#000" 
               strokeWidth={3}
               strokeLinecap="round"
             />
-            <Path
-              d="M80 25 h10 v50 h-10"
-              stroke="#000"
+            <Path 
+              d="M6 90 L6 100 L16 100" 
+              stroke="#000" 
               strokeWidth={3}
               strokeLinecap="round"
             />
-            {/* Green Dots */}
-            <Circle cx={10} cy={50} r={3} fill="#34C759" />
-            <Circle cx={90} cy={50} r={3} fill="#34C759" />
+            <Path 
+              d="M90 30 L90 20 L80 20" 
+              stroke="#000" 
+              strokeWidth={3}
+              strokeLinecap="round"
+            />
+            <Path 
+              d="M90 90 L90 100 L80 100" 
+              stroke="#000" 
+              strokeWidth={3}
+              strokeLinecap="round"
+            />
+            {/* Scan line */}
+            <Line 
+              x1={0} 
+              y1={60} 
+              x2={96} 
+              y2={60} 
+              stroke="#22C55E" 
+              strokeWidth={2}
+            />
+            {/* Green dots */}
+            <Circle cx={6} cy={60} r={4} fill="#22C55E" />
+            <Circle cx={90} cy={60} r={4} fill="#22C55E" />
           </Svg>
         </View>
 
         <Text style={styles.statusText}>Verifying your credentials</Text>
         
-        <ActivityIndicator size="large" color="#666" style={styles.spinner} />
+        <ActivityIndicator size="small" color="#6B7280" style={styles.spinner} />
       </View>
-    </SafeAreaView>
+
+      <HomeIndicator />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
   },
   content: {
     flex: 1,
@@ -106,12 +135,12 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   statusText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#000',
-    marginBottom: 15,
+    marginBottom: 16,
   },
   spinner: {
-    marginTop: 15,
+    marginTop: 8,
   },
 });

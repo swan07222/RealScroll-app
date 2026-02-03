@@ -1,6 +1,12 @@
 // app/(onboarding)/phone.tsx
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Dimensions 
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,7 +15,13 @@ import { authApi } from '@/api';
 
 const { width } = Dimensions.get('window');
 
-const KEYPAD = [
+interface KeypadKey {
+  num: string;
+  letters: string;
+  blank?: boolean;
+}
+
+const KEYPAD: KeypadKey[] = [
   { num: '1', letters: '' },
   { num: '2', letters: 'ABC' },
   { num: '3', letters: 'DEF' },
@@ -25,20 +37,20 @@ const KEYPAD = [
 ];
 
 export default function PhoneScreen() {
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const handleKeyPress = (key: string) => {
+  const handleKeyPress = (key: string): void => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
     if (key === 'backspace') {
-      setPhoneNumber((prev) => prev.slice(0, -1));
+      setPhoneNumber((prev: string) => prev.slice(0, -1));
     } else if (phoneNumber.length < 10) {
-      setPhoneNumber((prev) => prev + key);
+      setPhoneNumber((prev: string) => prev + key);
     }
   };
 
-  const formatPhoneNumber = (num: string) => {
+  const formatPhoneNumber = (num: string): string => {
     if (num.length <= 3) return num;
     if (num.length <= 6) return `(${num.slice(0, 3)}) ${num.slice(3)}`;
     return `(${num.slice(0, 3)}) ${num.slice(3, 6)}-${num.slice(6)}`;
@@ -46,65 +58,103 @@ export default function PhoneScreen() {
 
   const isValid = phoneNumber.length >= 10;
 
-  const handleVerify = async () => {
-  if (!isValid) return;
-  
-  setIsLoading(true);
-  try {
-    await authApi.sendOtp(`+1${phoneNumber}`);
-    router.push({
-      pathname: '/(onboarding)/verify-otp',
-      params: { phone: `+1${phoneNumber}` },
-    });
-  } catch (error) {
-    console.error('Send OTP error:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  const handleVerify = async (): Promise<void> => {
+    if (!isValid) return;
+    
+    setIsLoading(true);
+    try {
+      await authApi.sendOtp(`+1${phoneNumber}`);
+      router.push({
+        pathname: '/(onboarding)/verify-otp',
+        params: { phone: `+1${phoneNumber}` },
+      });
+    } catch (error) {
+      console.error('Send OTP error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const renderKeypadKey = (key: KeypadKey, index: number): React.ReactElement => {
+    if (key.blank) {
+      return <View key={`blank-${index}`} style={styles.keyBlank} />;
+    }
+
+    if (key.num === 'backspace') {
+      return (
+        <TouchableOpacity
+          key="backspace"
+          style={styles.keyBlank}
+          onPress={() => handleKeyPress('backspace')}
+        >
+          <Ionicons name="backspace-outline" size={24} color="#000" />
+        </TouchableOpacity>
+      );
+    }
+
+    return (
+      <TouchableOpacity
+        key={key.num}
+        style={styles.key}
+        onPress={() => handleKeyPress(key.num)}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.keyNum}>{key.num}</Text>
+        {key.letters ? (
+          <Text style={styles.keyLetters}>{key.letters}</Text>
+        ) : null}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Content */}
       <View style={styles.content}>
-        {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
-
         {/* Title */}
         <Text style={styles.title}>Enter your phone number</Text>
         <Text style={styles.subtitle}>
-          RealScroll needs to verify your account. Carrier charges may apply.
+          Realscroll needs to verify your account carrier charges may apply.
         </Text>
 
-        {/* Phone Input Group */}
-        <View style={styles.phoneInputGroup}>
-          <TouchableOpacity style={styles.countrySelect}>
+        {/* Phone Input Card */}
+        <View style={styles.phoneCard}>
+          <TouchableOpacity style={styles.countryRow}>
             <Text style={styles.countryText}>United States</Text>
-            <Ionicons name="chevron-forward" size={18} color="#ccc" />
+            <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
           </TouchableOpacity>
-          <View style={styles.numberField}>
+          <View style={styles.divider} />
+          <View style={styles.numberRow}>
             <Text style={styles.dialCode}>+1</Text>
+            <View style={styles.dialCodeDivider} />
             <Text
               style={[
                 styles.phoneDisplay,
-                phoneNumber.length === 0 && styles.placeholder,
+                !phoneNumber && styles.placeholder,
               ]}
             >
-              {phoneNumber.length > 0
-                ? formatPhoneNumber(phoneNumber)
-                : '| your phone number'}
+              {phoneNumber 
+                ? formatPhoneNumber(phoneNumber) 
+                : '|your phone number'}
             </Text>
           </View>
         </View>
 
         {/* Verify Button */}
         <TouchableOpacity
-          style={[styles.verifyButton, isValid && styles.verifyButtonActive]}
+          style={[
+            styles.verifyButton,
+            isValid && styles.verifyButtonActive,
+          ]}
           onPress={handleVerify}
           disabled={!isValid || isLoading}
         >
-          <Text style={[styles.verifyButtonText, isValid && styles.verifyButtonTextActive]}>
+          <Text
+            style={[
+              styles.verifyButtonText,
+              isValid && styles.verifyButtonTextActive,
+            ]}
+          >
             {isLoading ? 'Sending...' : 'Verify'}
           </Text>
         </TouchableOpacity>
@@ -113,36 +163,13 @@ export default function PhoneScreen() {
       {/* Keypad */}
       <View style={styles.keypadContainer}>
         <View style={styles.keypadGrid}>
-          {KEYPAD.map((key, index) => {
-            if (key.blank) {
-              return <View key={index} style={styles.keyBlank} />;
-            }
-
-            if (key.num === 'backspace') {
-              return (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.keyBackspace}
-                  onPress={() => handleKeyPress('backspace')}
-                >
-                  <Ionicons name="backspace-outline" size={24} color="#000" />
-                </TouchableOpacity>
-              );
-            }
-
-            return (
-              <TouchableOpacity
-                key={index}
-                style={styles.key}
-                onPress={() => handleKeyPress(key.num)}
-                activeOpacity={0.6}
-              >
-                <Text style={styles.keyNum}>{key.num}</Text>
-                {key.letters ? <Text style={styles.keyLetters}>{key.letters}</Text> : null}
-              </TouchableOpacity>
-            );
-          })}
+          {KEYPAD.map((key, index) => renderKeypadKey(key, index))}
         </View>
+      </View>
+
+      {/* Home Indicator */}
+      <View style={styles.homeIndicator}>
+        <View style={styles.indicator} />
       </View>
     </SafeAreaView>
   );
@@ -151,99 +178,105 @@ export default function PhoneScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFCF9',
+    backgroundColor: '#FAFAF9',
   },
   content: {
     flex: 1,
     paddingHorizontal: 24,
-  },
-  backButton: {
-    marginTop: 10,
-    marginBottom: 30,
+    paddingTop: 16,
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '700',
-    marginBottom: 10,
     color: '#000',
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 15,
-    color: '#666',
-    lineHeight: 21,
-    marginBottom: 25,
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+    marginBottom: 32,
   },
-  phoneInputGroup: {
+  phoneCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.02,
-    shadowRadius: 10,
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
     elevation: 1,
+    marginBottom: 16,
   },
-  countrySelect: {
+  countryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
+    padding: 16,
   },
   countryText: {
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
     color: '#000',
   },
-  numberField: {
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+  },
+  numberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
-    height: 50,
+    padding: 16,
   },
   dialCode: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    marginRight: 10,
-    paddingRight: 10,
-    borderRightWidth: 1,
-    borderRightColor: '#eee',
     color: '#000',
+    marginRight: 12,
+  },
+  dialCodeDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#E5E7EB',
+    marginRight: 12,
   },
   phoneDisplay: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#000',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   placeholder: {
-    color: '#ccc',
+    color: '#D1D5DB',
   },
   verifyButton: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#f5f5f5',
-    paddingVertical: 16,
-    alignItems: 'center',
     backgroundColor: '#fff',
+    borderRadius: 18,
+    paddingVertical: 14,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 1,
   },
   verifyButtonActive: {
-    borderColor: '#000',
     backgroundColor: '#000',
   },
   verifyButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#ccc',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#D1D5DB',
   },
   verifyButtonTextActive: {
     color: '#fff',
   },
   keypadContainer: {
-    backgroundColor: '#CED2D9',
-    padding: 10,
-    paddingBottom: 40,
+    backgroundColor: '#D1D5DB',
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    paddingBottom: 8,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
   },
   keypadGrid: {
     flexDirection: 'row',
@@ -252,37 +285,45 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   key: {
-    width: (width - 20 - 18) / 3,
+    width: (width - 12 - 18) / 3,
     height: 48,
-    backgroundColor: '#FCFCFE',
+    backgroundColor: '#fff',
     borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#888',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 1,
+    shadowOpacity: 0.8,
     shadowRadius: 0,
     elevation: 1,
   },
   keyNum: {
     fontSize: 20,
-    color: '#000',
     fontWeight: '400',
+    color: '#000',
   },
   keyLetters: {
     fontSize: 9,
     fontWeight: '700',
-    color: '#666',
-    marginTop: 2,
+    color: '#000',
+    letterSpacing: 1.5,
+    marginTop: 1,
   },
   keyBlank: {
-    width: (width - 20 - 18) / 3,
-    height: 48,
-  },
-  keyBackspace: {
-    width: (width - 20 - 18) / 3,
+    width: (width - 12 - 18) / 3,
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  homeIndicator: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    backgroundColor: '#D1D5DB',
+  },
+  indicator: {
+    width: 130,
+    height: 5,
+    backgroundColor: '#000',
+    borderRadius: 3,
   },
 });

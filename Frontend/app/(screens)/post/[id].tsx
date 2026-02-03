@@ -103,8 +103,8 @@ export default function PostDetailScreen() {
         {/* Tags */}
         {post.tags && post.tags.length > 0 && (
           <View style={styles.tagsRow}>
-            {post.tags.map((tag, index) => (
-              <TouchableOpacity key={index} style={styles.tag}>
+            {post.tags.map((tag: string, index: number) => (
+              <TouchableOpacity key={`tag-${tag}-${index}`} style={styles.tag}>
                 <Text style={styles.tagText}>#{tag}</Text>
               </TouchableOpacity>
             ))}

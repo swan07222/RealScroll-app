@@ -146,11 +146,19 @@ export default function ClaimUsernameScreen() {
 
           {/* Submit Button */}
           <TouchableOpacity
-            style={[styles.submitButton, isFormValid() && styles.submitButtonActive]}
+            style={[
+              styles.submitButton,
+              isFormValid() ? styles.submitButtonActive : styles.submitButtonInactive,
+            ]}
             onPress={handleSubmit}
             disabled={!isFormValid()}
           >
-            <Text style={[styles.submitButtonText, isFormValid() && styles.submitButtonTextActive]}>
+            <Text
+              style={[
+                styles.submitButtonText,
+                isFormValid() ? styles.submitButtonTextActive : styles.submitButtonTextInactive,
+              ]}
+            >
               Submit Request
             </Text>
           </TouchableOpacity>
@@ -169,7 +177,7 @@ export default function ClaimUsernameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFCF9',
+    backgroundColor: '#FFFFFF',
   },
   keyboardView: {
     flex: 1,
@@ -204,7 +212,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#86868b',
     lineHeight: 22,
-    marginBottom: 20,
+    marginBottom: 15,
   },
   inputGroup: {
     marginBottom: 20,
@@ -235,35 +243,42 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 17,
     fontWeight: '700',
-    marginBottom: 6,
+    marginBottom: 5,
     color: '#000',
   },
   sectionSubtitle: {
     fontSize: 13,
     color: '#86868b',
     lineHeight: 18,
-    marginBottom: 16,
+    marginBottom: 15,
   },
   submitButton: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-    borderRadius: 14,
+    width: '100%',
     paddingVertical: 18,
+    borderRadius: 14,
     alignItems: 'center',
     marginTop: 10,
     marginBottom: 16,
   },
   submitButtonActive: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
     borderColor: '#E5E5EA',
+  },
+  submitButtonInactive: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   submitButtonText: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#ccc',
   },
   submitButtonTextActive: {
     color: '#000',
+  },
+  submitButtonTextInactive: {
+    color: '#ccc',
   },
   termsText: {
     fontSize: 11,

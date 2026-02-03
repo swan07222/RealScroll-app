@@ -1,5 +1,5 @@
 // app/(tabs)/profile.tsx
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,29 +13,31 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+
 import { useAuth } from '@/hooks/use-auth';
 import { useUserPosts } from '@/hooks/use-user';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Loading } from '@/components/ui/loading';
 import { formatNumber } from '@/utils/helpers';
-import { Post } from '@/types';
+import type { Post } from '@/types';
 
 const { width } = Dimensions.get('window');
 const imageSize = (width - 4) / 3;
 
 export default function ProfileScreen() {
   const { user } = useAuth();
-  const { posts, isLoading, fetchPosts } = useUserPosts(user?.id || '');
+  const { posts, isLoading, fetchPosts } = useUserPosts(user?.id ?? '');
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
-      fetchPosts();
+      fetchPosts(1);
     }
   }, [user?.id, fetchPosts]);
 
   const handleRefresh = async () => {
+    if (!user?.id) return;
     setRefreshing(true);
     await fetchPosts(1);
     setRefreshing(false);
@@ -50,28 +52,23 @@ export default function ProfileScreen() {
   };
 
   const handlePostPress = (post: Post) => {
-    router.push({
-      pathname: '/(screens)/post/[id]',
-      params: { id: post.id }
-    });
+    router.push(`/(screens)/post/${post.id}`);
   };
 
   const handleFollowersPress = () => {
-    if (user?.id) {
-      router.push({
-        pathname: '/(screens)/followers/[userId]',
-        params: { userId: user.id }
-      });
-    }
+    if (!user?.id) return;
+    router.push({
+      pathname: '/(screens)/followers/[userId]',
+      params: { userId: user.id },
+    });
   };
 
   const handleFollowingPress = () => {
-    if (user?.id) {
-      router.push({
-        pathname: '/(screens)/following/[userId]',
-        params: { userId: user.id }
-      });
-    }
+    if (!user?.id) return;
+    router.push({
+      pathname: '/(screens)/following/[userId]',
+      params: { userId: user.id },
+    });
   };
 
   if (!user) {
@@ -97,29 +94,25 @@ export default function ProfileScreen() {
         {/* Profile Info */}
         <View style={styles.profileSection}>
           <Avatar uri={user.avatar} size={90} showVerified={user.isVerified} />
-          
+
           <Text style={styles.displayName}>{user.displayName}</Text>
-          
-          {user.bio && <Text style={styles.bio}>{user.bio}</Text>}
+
+          {user.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
 
           {/* Stats */}
           <View style={styles.statsContainer}>
-            <TouchableOpacity style={styles.statItem}>
-              <Text style={styles.statNumber}>{formatNumber(user.postsCount)}</Text>
+            <TouchableOpacity style={styles.statItem} activeOpacity={0.8}>
+              <Text style={styles.statNumber}>{formatNumber(user.postsCount ?? 0)}</Text>
               <Text style={styles.statLabel}>Posts</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.statItem}
-              onPress={handleFollowersPress}
-            >
-              <Text style={styles.statNumber}>{formatNumber(user.followersCount)}</Text>
+
+            <TouchableOpacity style={styles.statItem} onPress={handleFollowersPress} activeOpacity={0.8}>
+              <Text style={styles.statNumber}>{formatNumber(user.followersCount ?? 0)}</Text>
               <Text style={styles.statLabel}>Followers</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.statItem}
-              onPress={handleFollowingPress}
-            >
-              <Text style={styles.statNumber}>{formatNumber(user.followingCount)}</Text>
+
+            <TouchableOpacity style={styles.statItem} onPress={handleFollowingPress} activeOpacity={0.8}>
+              <Text style={styles.statNumber}>{formatNumber(user.followingCount ?? 0)}</Text>
               <Text style={styles.statLabel}>Following</Text>
             </TouchableOpacity>
           </View>
@@ -132,7 +125,7 @@ export default function ProfileScreen() {
               onPress={handleEditProfile}
               style={styles.editButton}
             />
-            <TouchableOpacity style={styles.shareButton}>
+            <TouchableOpacity style={styles.shareButton} activeOpacity={0.8}>
               <Ionicons name="share-outline" size={20} color="#000" />
             </TouchableOpacity>
           </View>
@@ -169,17 +162,18 @@ export default function ProfileScreen() {
                   key={post.id}
                   style={styles.postItem}
                   onPress={() => handlePostPress(post)}
+                  activeOpacity={0.85}
                 >
                   <Image
                     source={{ uri: post.mediaUrl || post.thumbnailUrl }}
                     style={styles.postImage}
                     contentFit="cover"
                   />
-                  {post.mediaType === 'video' && (
+                  {post.mediaType === 'video' ? (
                     <View style={styles.videoIcon}>
                       <Ionicons name="play" size={16} color="#fff" />
                     </View>
-                  )}
+                  ) : null}
                 </TouchableOpacity>
               ))}
             </View>

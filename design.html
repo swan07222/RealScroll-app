@@ -2,613 +2,872 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=0.5">
-    <title>iOS UI Replication</title>
-    <!-- FontAwesome for standard UI icons (wifi, battery, back arrow) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RealScroll - Full 25 Screen Journey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --bg-body: #1c1c1e;
-            --bg-screen: #FFFFFF;
-            --bg-input: #F2F2F7;
-            --bg-keyboard: #CFD3D9;
-            --text-primary: #000000;
-            --text-secondary: #86868b;
-            --accent-green: #34C759;
-            --accent-red: #FF3B30;
-            --accent-blue: #007AFF;
-            --border-color: #E5E5EA;
+            --bg-color: #FAFAF9;
+            --text-main: #000000;
+            --text-sub: #6B7280;
+            --green: #22C55E;
+            --red: #EF4444;
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
 
         body {
-            background-color: var(--bg-body);
+            background-color: #1a1a1a;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 40px;
+            overflow-x: auto; /* Horizontal scroll for gallery view */
             display: flex;
-            flex-wrap: wrap;
+            align-items: flex-start;
             gap: 40px;
-            justify-content: center;
-            padding: 50px;
         }
 
-        /* --- DEVICE CHASSIS --- */
-        .iphone {
+        /* Phone Container */
+        .phone {
             width: 393px;
             height: 852px;
-            background: var(--bg-screen);
+            background-color: var(--bg-color);
             border-radius: 55px;
             position: relative;
+            flex-shrink: 0;
             overflow: hidden;
-            box-shadow: 0 0 0 12px #333, 0 20px 50px rgba(0,0,0,0.5);
+            box-shadow: 0 0 0 12px #2b2b2b, 0 30px 60px rgba(0,0,0,0.6);
             display: flex;
             flex-direction: column;
-            transform: scale(0.9); /* Scaled slightly for viewing comfort */
         }
 
-        /* --- HEADER & STATUS BAR --- */
-        .status-bar {
-            height: 54px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 28px;
-            font-size: 16px;
-            font-weight: 600;
-            margin-top: 5px;
-            z-index: 10;
-        }
-        .dynamic-island {
-            position: absolute;
-            top: 11px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 126px;
-            height: 37px;
-            background: black;
-            border-radius: 20px;
-            z-index: 20;
-        }
-        .nav-header {
-            height: 44px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 24px;
-            margin-top: 5px;
-        }
-        .back-btn { font-size: 20px; border: none; background: none; cursor: pointer; color: #000; }
-        .nav-title { font-size: 17px; font-weight: 600; }
+        /* Custom Scrollbar for body */
+        body::-webkit-scrollbar { height: 12px; }
+        body::-webkit-scrollbar-track { background: #2b2b2b; }
+        body::-webkit-scrollbar-thumb { background: #555; border-radius: 6px; }
+
+        /* Utilities */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .shadow-soft { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
+        .shadow-card { box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .font-tighter { letter-spacing: -0.02em; }
         
-        /* --- MAIN CONTENT LAYOUT --- */
-        .content {
-            padding: 10px 24px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto; /* Allow scroll if content is long */
-        }
-        
-        h1 { font-size: 28px; font-weight: 700; margin-bottom: 12px; line-height: 1.2; }
-        p.desc { color: var(--text-secondary); font-size: 15px; line-height: 1.4; margin-bottom: 24px; }
-
-        /* --- INPUTS & FORMS --- */
-        .input-group { margin-bottom: 16px; position: relative; }
-        .input-box {
-            width: 100%;
-            background: var(--bg-input);
-            padding: 18px 16px;
-            border-radius: 12px;
-            border: none;
-            font-size: 17px;
-            outline: none;
-        }
-        .input-box::placeholder { color: #aaa; }
-        .input-icon {
-            position: absolute;
-            right: 16px;
-            top: 18px;
-            font-size: 20px;
-        }
-        .helper-text {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 8px;
-            padding: 0 4px;
-        }
-
-        /* Code Input Squares */
-        .code-container {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-        }
-        .code-digit {
-            width: 48px;
-            height: 58px;
-            border: 1px solid #E5E5EA;
-            border-radius: 12px;
-            font-size: 28px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .code-digit.filled { background-color: #fff; border-color: #000; }
-
-        /* --- BUTTONS --- */
-        .btn {
-            width: 100%;
-            padding: 18px;
-            border-radius: 14px;
-            font-size: 17px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            margin-top: auto;
-            margin-bottom: 10px;
-        }
-        .btn-black { background: #000; color: #fff; }
-        .btn-white { background: #fff; border: 1px solid #E5E5EA; color: #000; }
-        .btn-ghost { background: #fafafa; color: #ccc; border: 1px solid #f0f0f0; }
-
-        /* --- PROGRESS BARS --- */
-        .progress-indicator {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 24px;
-        }
-        .bar-seg { flex: 1; height: 4px; background: #E5E5EA; border-radius: 2px; }
-        .bar-seg.active { background: #000; }
-
-        /* --- KEYBOARDS --- */
-        /* Numeric */
-        .numpad {
-            background: var(--bg-input);
-            padding: 15px 30px 40px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px 25px;
-        }
-        .num-key {
-            background: #fff;
+        /* Keypad Styling */
+        .keypad-bg { background-color: #D1D5DB; }
+        .key-btn { 
+            background: white; 
+            border-radius: 5px; 
+            box-shadow: 0 1px 0 #888; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 48px;
-            border-radius: 5px;
-            box-shadow: 0 1px 0 #898989;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 25px;
-            font-weight: 400;
+            transition: background 0.1s;
         }
-        .num-sub { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; margin-top: -3px; }
-        .num-key.empty { background: transparent; box-shadow: none; }
+        .key-btn:active { background: #e5e5e5; }
 
-        /* QWERTY */
-        .qwerty { background: var(--bg-keyboard); padding: 8px 3px 40px; }
-        .qw-row { display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; }
-        .qw-key {
-            background: #fff;
-            border-radius: 5px;
-            height: 42px;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            box-shadow: 0 1px 0 #888;
+        /* Illustration Helpers (Doodle Style) */
+        .doodle-card {
+            background: white;
+            border: 2px solid black;
+            border-radius: 12px;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.05);
         }
-        .qw-key.gray { background: #adb3bc; }
-        .qw-key.blue { background: var(--accent-blue); color: white; flex: 1.5; font-size: 16px; font-weight: 600;}
-        .qw-key.space { flex: 4; font-size: 15px; }
 
-        /* --- ILLUSTRATIONS (SVG) --- */
-        .illustration-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        .screen-label {
+            position: absolute;
+            top: -30px;
+            left: 0;
+            width: 100%;
             text-align: center;
-            padding-bottom: 50px;
+            color: #888;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .illustration-area svg { width: 120px; height: 120px; margin-bottom: 24px; }
-        .status-msg { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
-        .spinner {
-            width: 28px; height: 28px;
-            border: 3px solid #e5e5ea; border-top: 3px solid #666;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+
+        .wrapper { position: relative; }
+
+        /* Specific Animation for Loading */
+        .spin-slow { animation: spin 3s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        /* --- UTILS --- */
-        .text-green { color: var(--accent-green); }
-        .text-red { color: var(--accent-red); }
-        .home-indicator {
-            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-            width: 140px; height: 5px; background: #000; border-radius: 3px; z-index: 100;
-        }
-        .label-tag {
-            position: absolute; top: -40px; left: 0; color: #888; font-size: 14px; font-weight: 500;
-        }
-
-        /* Checkbox */
-        .checkbox-container {
-            display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; color: var(--text-secondary); font-size: 14px;
-        }
-        .custom-checkbox {
-            width: 20px; height: 20px; border: 1px solid #ccc; border-radius: 4px; display: flex; align-items: center; justify-content: center;
-        }
-        .custom-checkbox.checked { background: #000; border-color: #000; color: #fff; font-size: 12px; }
 
     </style>
 </head>
 <body>
 
-    <!-- ================================================================= -->
-    <!-- IMAGE 1: VERIFICATION FLOW -->
-    <!-- ================================================================= -->
+<!-- =========================================================================
+     SECTION 1: ONBOARDING & SPLASH
+========================================================================== -->
 
-    <!-- FRAME 99: Enter Code (In Progress) -->
-    <div class="iphone">
-        <span class="label-tag">Frame 99</span>
-        <div class="status-bar"><span>1:47</span><div class="dynamic-island"></div><div style="display:flex; gap:6px"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
-        <div class="nav-header"><button class="back-btn"><i class="fas fa-arrow-left"></i></button></div>
-        <div class="content">
-            <h1>Enter Verification Code</h1>
-            <p class="desc">Please check your SMS for the verification code and enter it here to complete the process.</p>
-            <div class="code-container">
-                <div class="code-digit filled">4</div><div class="code-digit filled">5</div>
-                <div class="code-digit filled">6</div><div class="code-digit filled">4</div>
-                <div class="code-digit filled">4</div><div class="code-digit"></div>
-            </div>
-            <button class="btn btn-ghost" style="margin-top:0">Verify</button>
-            <div style="text-align: center; margin-top: 20px;">
-                <p style="font-size:13px; color:#888; margin-bottom:5px">You can resend the code in <strong>56 seconds</strong></p>
-                <p style="font-size:14px; font-weight:600">Resend Code</p>
-            </div>
+<!-- 1. Splash Logo -->
+<div class="wrapper">
+    <div class="screen-label">01. Splash</div>
+    <div class="phone justify-center items-center">
+        <!-- Status Bar (Present on all) -->
+        <div class="absolute top-0 w-full pt-4 px-7 flex justify-between items-center text-black font-semibold text-[15px] z-50"><span>1:47</span><div class="flex gap-1.5"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 15a1 1 0 011-1h2a1 1 0 110 2H3a1 1 0 01-1-1zm4-3a1 1 0 011-1h2a1 1 0 110 2H7a1 1 0 01-1-1zm4-4a1 1 0 011-1h2a1 1 0 110 2H11a1 1 0 01-1-1zm4-4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"/></svg><div class="w-6 h-3 border border-gray-400 rounded-[4px] relative"><div class="bg-black w-4 h-full rounded-[2px]"></div></div></div></div>
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        
+        <div class="flex items-center gap-2 font-bold text-2xl">
+            <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center"><svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+            RealScroll
         </div>
-        <div class="numpad">
-            <div class="num-key">1</div><div class="num-key">2<span class="num-sub">ABC</span></div><div class="num-key">3<span class="num-sub">DEF</span></div>
-            <div class="num-key">4<span class="num-sub">GHI</span></div><div class="num-key">5<span class="num-sub">JKL</span></div><div class="num-key">6<span class="num-sub">MNO</span></div>
-            <div class="num-key">7<span class="num-sub">PQRS</span></div><div class="num-key">8<span class="num-sub">TUV</span></div><div class="num-key">9<span class="num-sub">WXYZ</span></div>
-            <div class="num-key empty"></div><div class="num-key">0</div><div class="num-key empty"><i class="fas fa-backspace"></i></div>
-        </div>
-        <div class="home-indicator"></div>
+        <div class="absolute bottom-10 text-[10px] text-gray-300">Real people. Real moments.</div>
+        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
     </div>
+</div>
 
-    <!-- FRAME 100: Enter Code (Filled) -->
-    <div class="iphone">
-        <span class="label-tag">Frame 100</span>
-        <div class="status-bar"><span>1:47</span><div class="dynamic-island"></div><div style="display:flex; gap:6px"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
-        <div class="nav-header"><button class="back-btn"><i class="fas fa-arrow-left"></i></button></div>
-        <div class="content">
-            <h1>Enter Verification Code</h1>
-            <p class="desc">Please check your SMS for the verification code and enter it here to complete the process.</p>
-            <div class="code-container">
-                <div class="code-digit filled">4</div><div class="code-digit filled">5</div>
-                <div class="code-digit filled">6</div><div class="code-digit filled">4</div>
-                <div class="code-digit filled">4</div><div class="code-digit filled">6</div>
-            </div>
-            <button class="btn btn-black" style="margin-top:0">Verify</button>
-            <div style="text-align: center; margin-top: 20px;">
-                <p style="font-size:13px; color:#888; margin-bottom:5px">You can resend the code in <strong>56 seconds</strong></p>
-                <p style="font-size:14px; font-weight:600">Resend Code</p>
-            </div>
+<!-- 2. Splash Loading -->
+<div class="wrapper">
+    <div class="screen-label">02. Loading</div>
+    <div class="phone justify-center items-center">
+        <!-- Header Chrome -->
+        <div class="absolute top-0 w-full pt-4 px-7 flex justify-between items-center z-50"><span>1:47</span><div class="flex gap-1.5"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 15a1 1 0 011-1h2a1 1 0 110 2H3a1 1 0 01-1-1zm4-3a1 1 0 011-1h2a1 1 0 110 2H7a1 1 0 01-1-1zm4-4a1 1 0 011-1h2a1 1 0 110 2H11a1 1 0 01-1-1zm4-4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"/></svg><div class="w-6 h-3 border border-gray-400 rounded-[4px] relative"><div class="bg-black w-4 h-full rounded-[2px]"></div></div></div></div>
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+
+        <div class="flex items-center gap-2 font-bold text-2xl mb-8">
+            <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center"><svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+            RealScroll
         </div>
-        <div class="numpad">
-             <!-- Same numpad -->
-             <div class="num-key">1</div><div class="num-key">2<span class="num-sub">ABC</span></div><div class="num-key">3<span class="num-sub">DEF</span></div>
-             <div class="num-key">4<span class="num-sub">GHI</span></div><div class="num-key">5<span class="num-sub">JKL</span></div><div class="num-key">6<span class="num-sub">MNO</span></div>
-             <div class="num-key">7<span class="num-sub">PQRS</span></div><div class="num-key">8<span class="num-sub">TUV</span></div><div class="num-key">9<span class="num-sub">WXYZ</span></div>
-             <div class="num-key empty"></div><div class="num-key">0</div><div class="num-key empty"><i class="fas fa-backspace"></i></div>
-        </div>
-        <div class="home-indicator"></div>
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
+        <div class="absolute bottom-10 text-[10px] text-gray-300">Real people. Real moments.</div>
+        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
     </div>
+</div>
 
-    <!-- FRAME 103: Verifying -->
-    <div class="iphone">
-        <span class="label-tag">Frame 103</span>
-        <div class="status-bar"><span>1:47</span><div class="dynamic-island"></div><div style="display:flex; gap:6px"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
-        <div class="illustration-area">
-            <!-- Face Scan SVG -->
-            <svg viewBox="0 0 100 100" fill="none" stroke="black" stroke-width="2">
-                <!-- Head -->
-                <path d="M50 25c-12 0-22 10-22 22v5c0 8 15 15 22 15s22-7 22-15v-5c0-12-10-22-22-22z" />
-                <path d="M28 70c0-10 8-15 22-15s22 5 22 15" />
-                <!-- Brackets -->
-                <path d="M20 25 h-10 v50 h10" stroke-width="3" stroke-linecap="round"/>
-                <path d="M80 25 h10 v50 h-10" stroke-width="3" stroke-linecap="round"/>
-                <!-- Green Dots -->
-                <circle cx="10" cy="50" r="3" fill="#34C759" stroke="none"/>
-                <circle cx="90" cy="50" r="3" fill="#34C759" stroke="none"/>
-            </svg>
-            <div class="status-msg">Verifying your credentials</div>
-            <div class="spinner" style="margin-top:15px"></div>
+<!-- 3. Onboarding 1 (Face) -->
+<div class="wrapper">
+    <div class="screen-label">03. Onboarding 1</div>
+    <div class="phone pt-16 pb-10 px-6 justify-between">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <!-- Top Nav -->
+        <div class="flex justify-between items-center mt-2">
+            <div class="flex items-center gap-2 font-bold text-lg"><div class="w-6 h-6 bg-black rounded-md flex items-center justify-center"><svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>RealScroll</div>
+            <button class="bg-white px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-100 shadow-sm">Skip</button>
         </div>
-        <div class="home-indicator"></div>
-    </div>
 
-    <!-- FRAME 105: Phone Verified -->
-    <div class="iphone">
-        <span class="label-tag">Frame 105</span>
-        <div class="status-bar"><span>1:47</span><div class="dynamic-island"></div><div style="display:flex; gap:6px"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
-        <div class="content">
-            <div class="illustration-area" style="padding-bottom:0; justify-content: center; height: 70%;">
-                <!-- Isometric Phone SVG -->
-                <svg viewBox="0 0 100 100" fill="none" stroke="black" stroke-width="2">
-                    <g transform="translate(50, 50) rotate(-10) translate(-50, -50)">
-                        <rect x="30" y="20" width="40" height="60" rx="4" />
-                        <line x1="45" y1="25" x2="55" y2="25" />
-                        <line x1="40" y1="75" x2="60" y2="75" />
-                        <!-- Green Check Circle inside -->
-                        <circle cx="50" cy="50" r="10" fill="#34C759" stroke="none" />
-                        <path d="M46 50 l3 3 l5 -5" stroke="white" stroke-width="2" />
-                        <!-- Radiating Lines -->
-                        <line x1="25" y1="15" x2="35" y2="25" stroke="#34C759"/>
-                        <line x1="75" y1="15" x2="65" y2="25" stroke="#34C759"/>
-                    </g>
-                </svg>
-                <div class="status-msg">Phone Number Verified</div>
-                <div style="margin-top:10px; color:#34C759; font-size:24px;"><i class="fas fa-check-circle"></i></div>
+        <!-- Illustration -->
+        <div class="flex-1 flex items-center justify-center">
+            <div class="relative w-48 h-48">
+                <!-- Phone -->
+                <div class="doodle-card w-28 h-44 absolute left-8 transform -rotate-12 flex flex-col items-center justify-center shadow-lg">
+                    <div class="w-14 h-14 border border-black rounded-full mb-2 flex items-center justify-center relative overflow-hidden">
+                        <div class="w-8 h-8 bg-gray-200 rounded-full mt-2"></div>
+                        <div class="absolute top-0 right-0 w-full h-full border border-dashed border-gray-400 rounded-full"></div>
+                    </div>
+                    <div class="w-16 h-1 bg-gray-200 rounded my-1"></div>
+                    <div class="w-12 h-1 bg-gray-200 rounded"></div>
+                </div>
+                <!-- Sparkles -->
+                <svg class="absolute top-0 right-0 w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg>
             </div>
-            <button class="btn btn-white">Setup Account</button>
         </div>
-        <div class="home-indicator"></div>
+
+        <div class="text-center">
+            <div class="flex justify-center gap-2 mb-6"><div class="w-6 h-1.5 bg-black rounded-full"></div><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div></div>
+            <h1 class="text-[32px] leading-tight font-bold tracking-tight mb-3">The future of real<br>social media.</h1>
+            <p class="text-gray-500 text-sm px-4 mb-8">Every post is verified human. No AI content. Just real moments from real people.</p>
+            <button class="w-full bg-white border border-gray-100 shadow-soft py-4 rounded-full font-bold text-[15px] mb-2">Get Started</button>
+            <button class="w-full py-4 font-medium text-[15px]">Login</button>
+        </div>
+        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
     </div>
+</div>
 
-    <!-- ================================================================= -->
-    <!-- IMAGE 2: USERNAME FLOW -->
-    <!-- ================================================================= -->
+<!-- 4. Onboarding 2 (Scanner) -->
+<div class="wrapper">
+    <div class="screen-label">04. Onboarding 2</div>
+    <div class="phone pt-16 pb-10 px-6 justify-between">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="flex justify-between items-center mt-2">
+            <div class="flex items-center gap-2 font-bold text-lg"><div class="w-6 h-6 bg-black rounded-md flex items-center justify-center"><svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>RealScroll</div>
+            <button class="bg-white px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-100 shadow-sm">Skip</button>
+        </div>
 
-    <!-- FRAME 106: Error Verifying -->
-    <div class="iphone">
-        <span class="label-tag">Frame 106</span>
-        <div class="status-bar"><span>1:47</span><div class="dynamic-island"></div><div style="display:flex; gap:6px"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
-        <div class="content">
-            <div class="illustration-area" style="padding-bottom:0; justify-content: center; height: 70%;">
-                <!-- Isometric Phone SVG (Red) -->
-                <svg viewBox="0 0 100 100" fill="none" stroke="black" stroke-width="2">
-                    <g transform="translate(50, 50) rotate(-10) translate(-50, -50)">
-                        <rect x="30" y="20" width="40" height="60" rx="4" />
-                        <!-- Red Cross Circle inside -->
-                        <circle cx="50" cy="50" r="10" fill="#FF3B30" stroke="none" />
-                        <path d="M46 46 l8 8 M54 46 l-8 8" stroke="white" stroke-width="2" />
-                        <!-- Radiating Lines Red -->
-                        <line x1="25" y1="15" x2="35" y2="25" stroke="#FF3B30"/>
-                        <line x1="75" y1="15" x2="65" y2="25" stroke="#FF3B30"/>
-                    </g>
-                </svg>
-                <div class="status-msg">Error Verifying Number</div>
-                <div style="margin-top:10px; color:#FF3B30; font-size:24px;"><i class="fas fa-exclamation-circle"></i></div>
+        <div class="flex-1 flex items-center justify-center">
+            <div class="relative w-48 h-48">
+                <div class="w-36 h-28 bg-black rounded-xl absolute bottom-8 left-6 transform rotate-n12"></div>
+                <div class="doodle-card w-36 h-28 absolute bottom-12 left-8 transform rotate-n12 flex flex-col items-center justify-center">
+                    <div class="w-12 h-12 bg-gray-100 rounded-full mb-2"></div>
+                    <div class="w-20 h-1 bg-gray-200 rounded"></div>
+                    <div class="absolute bottom-0 w-full h-1 bg-gray-100"></div>
+                </div>
+                <!-- Scanner Beam -->
+                <div class="absolute top-16 left-10 w-28 h-8 bg-green-100 opacity-50 transform rotate-n12"></div>
             </div>
-            <button class="btn btn-white">Try Again</button>
         </div>
-        <div class="home-indicator"></div>
-    </div>
 
-    <!-- FRAME 107: Username (Empty) -->
-    <div class="iphone">
-        <span class="label-tag">Frame 107</span>
-        <div class="status-bar"><span>1:47</span><div class="dynamic-island"></div><div style="display:flex; gap:6px"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
-        <div class="nav-header"><button class="back-btn"><i class="fas fa-arrow-left"></i></button><span class="nav-title">Setup Account</span><div style="width:20px"></div></div>
-        <div class="content">
-            <div class="progress-indicator"><div class="bar-seg active"></div><div class="bar-seg"></div><div class="bar-seg"></div><div class="bar-seg"></div></div>
-            <h1>Your Username</h1>
-            <p class="desc">Create your username and you can change it later.</p>
-            <div class="input-group">
-                <input type="text" class="input-box" placeholder="Enter Username">
-                <i class="fas fa-check-circle input-icon" style="color: #ccc;"></i>
-                <div class="helper-text">
-                    <span>*Name should be 15 characters or less</span>
-                    <span>11/15</span>
+        <div class="text-center">
+            <div class="flex justify-center gap-2 mb-6"><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div><div class="w-6 h-1.5 bg-black rounded-full"></div><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div></div>
+            <h1 class="text-[32px] leading-tight font-bold tracking-tight mb-3">Scroll confidently.<br>Everything is real.</h1>
+            <p class="text-gray-500 text-sm px-4 mb-8">We scan every upload to block AI and fake media so what you see is real.</p>
+            <button class="w-full bg-white border border-gray-100 shadow-soft py-4 rounded-full font-bold text-[15px] mb-2">Get Started</button>
+            <button class="w-full py-4 font-medium text-[15px]">Login</button>
+        </div>
+        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 5. Onboarding 3 (Authentic) -->
+<div class="wrapper">
+    <div class="screen-label">05. Onboarding 3</div>
+    <div class="phone pt-16 pb-10 px-6 justify-between">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="flex justify-between items-center mt-2">
+            <div class="flex items-center gap-2 font-bold text-lg"><div class="w-6 h-6 bg-black rounded-md flex items-center justify-center"><svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>RealScroll</div>
+            <button class="bg-white px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-100 shadow-sm">Skip</button>
+        </div>
+
+        <div class="flex-1 flex items-center justify-center">
+            <div class="relative w-48 h-48">
+                <!-- Phone Base -->
+                <div class="w-36 h-28 bg-black rounded-xl absolute bottom-8 left-6 transform -rotate-12 translate-y-4"></div>
+                <div class="doodle-card w-36 h-28 absolute bottom-12 left-8 transform -rotate-12 flex flex-col items-center justify-center shadow-lg overflow-hidden">
+                    <div class="w-12 h-12 rounded-full border border-black mb-1 flex items-center justify-center"><div class="w-8 h-8 rounded-full bg-gray-200"></div></div>
+                    <!-- Checkmark Overlay -->
+                    <div class="absolute inset-0 bg-white/50 flex items-center justify-center">
+                        <div class="w-full h-0.5 bg-green-500 absolute bottom-4"></div>
+                    </div>
+                </div>
+                 <svg class="absolute top-4 right-4 w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <div class="flex justify-center gap-2 mb-6"><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div><div class="w-6 h-1.5 bg-black rounded-full"></div></div>
+            <h1 class="text-[32px] leading-tight font-bold tracking-tight mb-3">Authentic posts.<br>Verified people.</h1>
+            <p class="text-gray-500 text-sm px-4 mb-8">Bringing social media back to real people, real moments, and content you can trust.</p>
+            <button class="w-full bg-white border border-gray-100 shadow-soft py-4 rounded-full font-bold text-[15px] mb-2">Get Started</button>
+            <button class="w-full py-4 font-medium text-[15px]">Login</button>
+        </div>
+        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- =========================================================================
+     SECTION 2: AUTHENTICATION
+========================================================================== -->
+
+<!-- 6. Language Select -->
+<div class="wrapper">
+    <div class="screen-label">06. Language</div>
+    <div class="phone pt-16 flex flex-col">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="px-6 mb-4">
+             <div class="w-6 h-6 mb-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></div>
+            <h2 class="text-2xl font-bold mb-2">Select Language</h2>
+            <p class="text-gray-500 text-sm leading-relaxed">Select the language you want to use to customize your experience.</p>
+            <div class="relative mt-6">
+                <svg class="w-5 h-5 text-gray-400 absolute left-4 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" placeholder="Search language" class="w-full bg-white py-3.5 pl-12 pr-4 rounded-[20px] text-sm outline-none shadow-card">
+            </div>
+        </div>
+        <div class="px-6 space-y-3">
+             <div class="bg-[#f0fdf4] border border-green-500 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3"><span class="text-2xl">🇺🇸</span><span class="font-semibold text-sm">English - US</span></div>
+                <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3"><span class="text-2xl">🇲🇽</span><span class="font-semibold text-sm">Spanish - MX</span></div>
+                <div class="w-6 h-6 border border-gray-200 rounded-full"></div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3"><span class="text-2xl">🇮🇩</span><span class="font-semibold text-sm">Indonesia - Bahasa</span></div>
+                <div class="w-6 h-6 border border-gray-200 rounded-full"></div>
+            </div>
+             <div class="bg-white p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3"><span class="text-2xl">🇳🇱</span><span class="font-semibold text-sm">Netherlands - Nederlands</span></div>
+                <div class="w-6 h-6 border border-gray-200 rounded-full"></div>
+            </div>
+        </div>
+        <div class="mt-auto px-6 pb-10">
+            <button class="w-full bg-white shadow-soft py-4 rounded-full font-bold text-[15px]">Continue</button>
+        </div>
+        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 7. Welcome (Before Phone) -->
+<div class="wrapper">
+    <div class="screen-label">07. Welcome</div>
+    <div class="phone flex-col items-center justify-center">
+         <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+         <div class="mb-8">
+             <div class="w-16 h-16 bg-black rounded-xl flex items-center justify-center mx-auto mb-4 transform rotate-45">
+                  <div class="w-8 h-8 bg-white rounded-full transform -rotate-45"></div>
+             </div>
+             <!-- The logo in Image 1/2 is a geometric shape -->
+             <div class="w-12 h-12 bg-black rounded-lg flex items-center justify-center transform rotate-45 mx-auto">
+                 <div class="w-6 h-6 bg-white rounded-sm"></div>
+             </div>
+         </div>
+         <h2 class="text-xl font-bold mb-2">Welcome To RealScroll</h2>
+         <p class="text-xs text-center px-10 text-gray-500 mb-8 leading-relaxed">Read our <span class="font-bold text-black">Privacy Policy</span>. Tap "Agree and continue" To accept <span class="font-bold text-black">Terms of Service</span>.</p>
+         <button class="w-3/4 bg-white shadow-soft py-4 rounded-full font-bold text-[15px]">Agree & continue</button>
+         <div class="absolute bottom-10 text-[10px] text-gray-300">Real stories. Real creators.</div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 8. Phone Input -->
+<div class="wrapper">
+    <div class="screen-label">08. Phone Input</div>
+    <div class="phone pt-16 flex flex-col justify-between">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="px-6">
+            <h2 class="text-2xl font-bold mb-2">Enter your phone number</h2>
+            <p class="text-gray-500 text-sm mb-8">Realscroll needs to verify your account carrier charges may apply.</p>
+            
+            <div class="bg-white rounded-2xl p-1 mb-4 shadow-card">
+                <div class="flex justify-between items-center p-3 border-b border-gray-100">
+                    <span class="text-sm font-semibold">United States</span>
+                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </div>
+                <div class="flex items-center p-3">
+                    <span class="text-sm font-semibold mr-3">+1</span>
+                    <div class="w-[1px] h-5 bg-gray-200 mr-3"></div>
+                    <input type="text" placeholder="|your phone number" class="w-full text-sm outline-none placeholder-gray-300">
                 </div>
             </div>
-            <button class="btn btn-white" style="color:#ccc; border-color:#f0f0f0;">Continue</button>
+            <button class="w-full bg-white text-gray-300 font-medium py-3.5 rounded-[18px] text-sm mt-2 shadow-card">Verify</button>
         </div>
-        <!-- QWERTY -->
-        <div class="qwerty">
-            <div class="qw-row"><div class="qw-key">Q</div><div class="qw-key">W</div><div class="qw-key">E</div><div class="qw-key">R</div><div class="qw-key">T</div><div class="qw-key">Y</div><div class="qw-key">U</div><div class="qw-key">I</div><div class="qw-key">O</div><div class="qw-key">P</div></div>
-            <div class="qw-row" style="padding:0 20px"><div class="qw-key">A</div><div class="qw-key">S</div><div class="qw-key">D</div><div class="qw-key">F</div><div class="qw-key">G</div><div class="qw-key">H</div><div class="qw-key">J</div><div class="qw-key">K</div><div class="qw-key">L</div></div>
-            <div class="qw-row"><div class="qw-key gray"><i class="fas fa-arrow-up"></i></div><div class="qw-key">Z</div><div class="qw-key">X</div><div class="qw-key">C</div><div class="qw-key">V</div><div class="qw-key">B</div><div class="qw-key">N</div><div class="qw-key">M</div><div class="qw-key gray"><i class="fas fa-backspace"></i></div></div>
-            <div class="qw-row"><div class="qw-key gray" style="font-size:14px">123</div><div class="qw-key space">space</div><div class="qw-key blue">Go</div></div>
+        <!-- Keypad -->
+        <div class="keypad-bg pt-2 px-1.5 pb-8 rounded-t-[25px]">
+            <div class="grid grid-cols-3 gap-1.5 text-center">
+                <div class="key-btn"><div class="text-xl font-normal">1</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">2</div><div class="text-[9px] font-bold tracking-widest mt-0.5">ABC</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">3</div><div class="text-[9px] font-bold tracking-widest mt-0.5">DEF</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">4</div><div class="text-[9px] font-bold tracking-widest mt-0.5">GHI</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">5</div><div class="text-[9px] font-bold tracking-widest mt-0.5">JKL</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">6</div><div class="text-[9px] font-bold tracking-widest mt-0.5">MNO</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">7</div><div class="text-[9px] font-bold tracking-widest mt-0.5">PQRS</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">8</div><div class="text-[9px] font-bold tracking-widest mt-0.5">TUV</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">9</div><div class="text-[9px] font-bold tracking-widest mt-0.5">WXYZ</div></div>
+                <div></div>
+                <div class="key-btn"><div class="text-xl font-normal">0</div></div>
+                <div class="flex items-center justify-center"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5z"/></svg></div>
+            </div>
         </div>
-        <div class="home-indicator"></div>
+        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
     </div>
+</div>
 
-    <!-- FRAME 110: Username (Available) -->
-    <div class="iphone">
-        <span class="label-tag">Frame 110</span>
-        <div class="status-bar"><span>1:47</span><div class="dynamic-island"></div><div style="display:flex; gap:6px"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
-        <div class="nav-header"><button class="back-btn"><i class="fas fa-arrow-left"></i></button><span class="nav-title">Setup Account</span><div style="width:20px"></div></div>
-        <div class="content">
-            <div class="progress-indicator"><div class="bar-seg active"></div><div class="bar-seg"></div><div class="bar-seg"></div><div class="bar-seg"></div></div>
-            <h1>Your Username</h1>
-            <p class="desc">Create your username and you can change it later.</p>
-            <div class="input-group">
-                <input type="text" class="input-box" value="Kovsk">
-                <i class="fas fa-check-circle input-icon text-green"></i>
-                <div class="helper-text">
-                    <span class="text-green">*Username available</span>
-                    <span>11/15</span>
+<!-- 9. Verify Code -->
+<div class="wrapper">
+    <div class="screen-label">09. Verify Code</div>
+    <div class="phone pt-16 flex flex-col justify-between">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="px-6">
+             <div class="w-6 h-6 mb-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></div>
+            <h2 class="text-2xl font-bold mb-2">Enter Verification Code</h2>
+            <p class="text-gray-500 text-sm mb-8">Please check your SMS for the verification code and enter it here to complete the process.</p>
+            <div class="flex justify-between gap-2 mb-8">
+                 <div class="w-11 h-14 bg-white rounded-xl border border-gray-200 flex items-center justify-center text-xl font-bold shadow-sm">4</div>
+                 <div class="w-11 h-14 bg-white rounded-xl border border-gray-200 flex items-center justify-center text-xl font-bold shadow-sm">5</div>
+                 <div class="w-11 h-14 bg-white rounded-xl border border-gray-200 flex items-center justify-center text-xl font-bold shadow-sm">6</div>
+                 <div class="w-11 h-14 bg-white rounded-xl border border-black flex items-center justify-center text-xl font-bold shadow-sm relative">4</div>
+                 <div class="w-11 h-14 bg-white rounded-xl border border-gray-200 shadow-sm">4</div>
+                 <div class="w-11 h-14 bg-white rounded-xl border border-gray-200 shadow-sm">6</div>
+            </div>
+            <button class="w-full bg-black text-white font-medium py-3.5 rounded-[18px] text-sm shadow-md mb-6">Verify</button>
+            <div class="text-center">
+                <p class="text-xs text-gray-500 mb-1">You can resend the code in <span class="font-bold text-black">56 seconds</span></p>
+                <p class="text-xs font-bold text-black">Resend Code</p>
+            </div>
+        </div>
+        <!-- Keypad (Same) -->
+        <div class="keypad-bg pt-2 px-1.5 pb-8 rounded-t-[25px]">
+            <div class="grid grid-cols-3 gap-1.5 text-center">
+                <div class="key-btn"><div class="text-xl font-normal">1</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">2</div><div class="text-[9px] font-bold tracking-widest mt-0.5">ABC</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">3</div><div class="text-[9px] font-bold tracking-widest mt-0.5">DEF</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">4</div><div class="text-[9px] font-bold tracking-widest mt-0.5">GHI</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">5</div><div class="text-[9px] font-bold tracking-widest mt-0.5">JKL</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">6</div><div class="text-[9px] font-bold tracking-widest mt-0.5">MNO</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">7</div><div class="text-[9px] font-bold tracking-widest mt-0.5">PQRS</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">8</div><div class="text-[9px] font-bold tracking-widest mt-0.5">TUV</div></div>
+                <div class="key-btn"><div class="text-xl font-normal">9</div><div class="text-[9px] font-bold tracking-widest mt-0.5">WXYZ</div></div>
+                <div></div><div class="key-btn"><div class="text-xl font-normal">0</div></div><div><svg class="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5z"/></svg></div>
+            </div>
+        </div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 10. Verify Loading -->
+<div class="wrapper">
+    <div class="screen-label">10. Verify Loading</div>
+    <div class="phone flex-col items-center justify-center">
+         <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+         <div class="relative w-24 h-24 mb-6">
+              <!-- Face ID Icon approximation -->
+              <div class="border-2 border-black rounded-xl w-16 h-20 mx-auto flex flex-col items-center justify-center relative">
+                   <div class="w-8 h-8 rounded-full border-2 border-black"></div>
+                   <div class="w-10 h-4 border-t-2 border-black rounded-t-full mt-1"></div>
+                   <!-- Scan Beam -->
+                   <div class="absolute top-1/2 w-24 h-0.5 bg-green-500 -left-4"></div>
+                   <div class="absolute -left-2 top-0 h-full w-0.5 flex flex-col justify-between"><div class="h-2 bg-green-500"></div><div class="h-2 bg-green-500"></div></div>
+                   <div class="absolute -right-2 top-0 h-full w-0.5 flex flex-col justify-between"><div class="h-2 bg-green-500"></div><div class="h-2 bg-green-500"></div></div>
+              </div>
+         </div>
+         <h2 class="text-lg font-bold">Verifying your credentials</h2>
+         <div class="mt-4 animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 11. Verify Error -->
+<div class="wrapper">
+    <div class="screen-label">11. Verify Error</div>
+    <div class="phone flex-col items-center justify-center pt-20">
+         <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+         <div class="relative w-36 h-24 mb-10">
+             <div class="doodle-card w-28 h-16 absolute left-4 transform rotate-n6 flex items-center justify-center shadow-lg">
+                 <div class="w-6 h-6 rounded-full border border-red-500 flex items-center justify-center text-red-500 text-xs font-bold">!</div>
+                 <div class="w-16 h-0.5 bg-red-100 absolute -z-10 transform -rotate-45"></div>
+                 <div class="w-16 h-0.5 bg-red-100 absolute -z-10 transform rotate-45"></div>
+             </div>
+         </div>
+         
+         <h2 class="text-xl font-bold mb-2">Error Verifying Number</h2>
+         <div class="w-6 h-6 rounded-full border border-red-500 flex items-center justify-center text-red-500 mb-32">!</div>
+         
+         <div class="absolute bottom-10 w-full px-6">
+             <button class="w-full bg-white shadow-soft py-4 rounded-full font-bold text-[15px]">Try Again</button>
+         </div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 12. Verify Success -->
+<div class="wrapper">
+    <div class="screen-label">12. Verify Success</div>
+    <div class="phone flex-col items-center justify-center pt-20">
+         <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+         <div class="relative w-36 h-24 mb-10">
+             <div class="doodle-card w-28 h-16 absolute left-4 transform rotate-n6 flex items-center justify-center">
+                 <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+             </div>
+             <svg class="absolute -top-6 right-0 w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+         </div>
+         
+         <h2 class="text-xl font-bold mb-4">Phone Number Verified</h2>
+         <div class="w-6 h-6 rounded-full border border-green-500 flex items-center justify-center text-green-500 mb-32"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+         
+         <div class="absolute bottom-10 w-full px-6">
+             <button class="w-full bg-white shadow-soft py-4 rounded-full font-bold text-[15px]">Setup Account</button>
+         </div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- =========================================================================
+     SECTION 3: SETUP ACCOUNT
+========================================================================== -->
+
+<!-- 13. Username (Empty) -->
+<div class="wrapper">
+    <div class="screen-label">13. Username (Empty)</div>
+    <div class="phone pt-16 flex flex-col justify-between">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="px-6">
+             <div class="w-6 h-6 mb-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></div>
+            <div class="text-center text-xs font-bold uppercase tracking-wide mb-6">Setup Account</div>
+            <div class="flex gap-2 mb-6"><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div></div>
+            <h2 class="text-3xl font-bold mb-2">Your Username</h2>
+            <p class="text-gray-500 text-sm mb-6">Create your username and you can change it later.</p>
+            
+            <input type="text" placeholder="Enter Username" class="w-full py-4 px-4 rounded-xl border-none outline-none text-base bg-white shadow-card font-medium">
+            <div class="flex justify-between text-[10px] px-1 mt-2 text-gray-400"><span>*Name should be 15 characters or less</span><span>11/15</span></div>
+            
+            <button class="w-full bg-white opacity-50 mt-8 py-4 rounded-xl font-bold shadow-sm text-gray-400">Continue</button>
+        </div>
+        
+        <!-- Standard Keyboard -->
+        <div class="bg-[#d1d5db] p-1.5 pb-8">
+             <div class="bg-white rounded p-1 mb-2 text-center text-sm shadow-sm py-2">Kovsk</div>
+            <div class="flex justify-center gap-1.5 mb-2"><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">Q</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">W</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">E</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">R</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">T</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">Y</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">U</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">I</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">O</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">P</div></div>
+            <div class="flex justify-center gap-1.5 mb-2 px-4"><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">A</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">S</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">D</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">F</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">G</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">H</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">J</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">K</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">L</div></div>
+            <div class="flex justify-center gap-1.5 mb-2"><div class="bg-gray-400 p-2 rounded w-10 flex items-center justify-center"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg></div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">Z</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">X</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">C</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">V</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">B</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">N</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">M</div><div class="bg-gray-400 p-2 rounded w-10 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/></svg></div></div>
+            <div class="flex gap-2 px-1"><div class="bg-gray-400 rounded px-4 py-2 text-xs font-bold">123</div><div class="bg-white rounded flex-1 py-2 text-center text-xs shadow-sm">space</div><div class="bg-blue-600 text-white rounded px-4 py-2 text-xs font-bold">Go</div></div>
+        </div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 14. Username (Available) -->
+<div class="wrapper">
+    <div class="screen-label">14. Username (Available)</div>
+    <div class="phone pt-16 flex flex-col justify-between">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="px-6">
+             <div class="w-6 h-6 mb-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></div>
+            <div class="text-center text-xs font-bold uppercase tracking-wide mb-6">Setup Account</div>
+            <div class="flex gap-2 mb-6"><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div></div>
+            <h2 class="text-3xl font-bold mb-2">Your Username</h2>
+            <p class="text-gray-500 text-sm mb-6">Create your username and you can change it later.</p>
+            
+            <div class="relative">
+                <input type="text" value="Kovsk" class="w-full py-4 px-4 rounded-xl border-none outline-none text-base bg-white shadow-card font-medium">
+                <div class="absolute right-4 top-4 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+            </div>
+            <div class="flex justify-between text-[10px] px-1 mt-2 text-green-500"><span>*Username available</span><span>11/15</span></div>
+            
+            <button class="w-full bg-white mt-8 py-4 rounded-xl font-bold shadow-sm text-black">Continue</button>
+        </div>
+        
+        <!-- Standard Keyboard -->
+        <div class="bg-[#d1d5db] p-1.5 pb-8">
+            <div class="flex justify-center gap-1.5 mb-2"><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">Q</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">W</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">E</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">R</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">T</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">Y</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">U</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">I</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">O</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">P</div></div>
+            <div class="flex justify-center gap-1.5 mb-2 px-4"><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">A</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">S</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">D</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">F</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">G</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">H</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">J</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">K</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">L</div></div>
+            <div class="flex justify-center gap-1.5 mb-2"><div class="bg-gray-400 p-2 rounded w-10 flex items-center justify-center"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg></div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">Z</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">X</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">C</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">V</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">B</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">N</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">M</div><div class="bg-gray-400 p-2 rounded w-10 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/></svg></div></div>
+            <div class="flex gap-2 px-1"><div class="bg-gray-400 rounded px-4 py-2 text-xs font-bold">123</div><div class="bg-white rounded flex-1 py-2 text-center text-xs shadow-sm">space</div><div class="bg-blue-600 text-white rounded px-4 py-2 text-xs font-bold">Go</div></div>
+        </div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 15. Username (Taken) -->
+<div class="wrapper">
+    <div class="screen-label">15. Username (Taken)</div>
+    <div class="phone pt-16 flex flex-col justify-between">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="px-6">
+             <div class="w-6 h-6 mb-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></div>
+            <div class="text-center text-xs font-bold uppercase tracking-wide mb-6">Setup Account</div>
+            <div class="flex gap-2 mb-6"><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div></div>
+            <h2 class="text-3xl font-bold mb-2">Your Username</h2>
+            <p class="text-gray-500 text-sm mb-6">Create your username.</p>
+            
+            <div class="relative">
+                <input type="text" value="Kovsk" class="w-full py-4 px-4 rounded-xl border-none outline-none text-base bg-white shadow-card font-medium">
+                <div class="absolute right-4 top-4 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg></div>
+            </div>
+            <div class="flex justify-between text-[10px] px-1 mt-2 text-red-500"><span>*Username not available</span><span>11/15</span></div>
+            
+            <button class="w-full bg-white opacity-50 mt-8 py-4 rounded-xl font-bold shadow-sm text-gray-400">Continue</button>
+            <div class="text-center mt-6">
+                <p class="text-xs text-gray-500 mb-1">Are you a brand or influencer?</p>
+                <p class="text-xs font-bold">Claim Username</p>
+            </div>
+        </div>
+        
+        <!-- Standard Keyboard -->
+        <div class="bg-[#d1d5db] p-1.5 pb-8">
+            <div class="flex justify-center gap-1.5 mb-2"><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">Q</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">W</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">E</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">R</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">T</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">Y</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">U</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">I</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">O</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">P</div></div>
+            <div class="flex justify-center gap-1.5 mb-2 px-4"><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">A</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">S</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">D</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">F</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">G</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">H</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">J</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">K</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">L</div></div>
+            <div class="flex justify-center gap-1.5 mb-2"><div class="bg-gray-400 p-2 rounded w-10 flex items-center justify-center"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg></div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">Z</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">X</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">C</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">V</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">B</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">N</div><div class="bg-white rounded p-2 text-xs shadow-sm w-8 text-center">M</div><div class="bg-gray-400 p-2 rounded w-10 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/></svg></div></div>
+            <div class="flex gap-2 px-1"><div class="bg-gray-400 rounded px-4 py-2 text-xs font-bold">123</div><div class="bg-white rounded flex-1 py-2 text-center text-xs shadow-sm">space</div><div class="bg-blue-600 text-white rounded px-4 py-2 text-xs font-bold">Go</div></div>
+        </div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 16. Claim Form -->
+<div class="wrapper">
+    <div class="screen-label">16. Claim Form</div>
+    <div class="phone pt-16 flex flex-col">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="px-6 h-full overflow-y-auto no-scrollbar">
+             <div class="w-6 h-6 mb-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></div>
+            <div class="text-center text-xs font-bold uppercase tracking-wide mb-6">Setup Account</div>
+            <h2 class="text-3xl font-bold mb-2">Claim Username</h2>
+            <p class="text-gray-500 text-sm mb-6">If you are an existing brand or influencer, claim your username here.</p>
+            
+            <input type="text" value="Kovsk" disabled class="w-full py-3.5 px-4 rounded-xl bg-white mb-1 border border-gray-100 text-gray-400 text-sm">
+            <div class="flex justify-between text-[10px] px-1 mb-6 text-gray-400"><span>*Name should be 15 characters or less</span><span>11/15</span></div>
+
+            <h3 class="font-bold mb-2 text-sm">Contact Info</h3>
+            <p class="text-gray-500 text-xs mb-4">Contact information in case we have any questions.</p>
+
+            <div class="space-y-3">
+                <input type="text" placeholder="Enter Website" class="w-full py-3.5 px-4 rounded-xl bg-white text-sm outline-none shadow-card">
+                <input type="text" placeholder="Enter Instagram URL" class="w-full py-3.5 px-4 rounded-xl bg-white text-sm outline-none shadow-card">
+                <input type="text" placeholder="Enter Email Address" class="w-full py-3.5 px-4 rounded-xl bg-white text-sm outline-none shadow-card">
+                <input type="text" placeholder="Enter Phone Number" class="w-full py-3.5 px-4 rounded-xl bg-white text-sm outline-none shadow-card">
+            </div>
+
+            <button class="w-full bg-white shadow-soft py-4 rounded-full font-bold mt-8 text-[15px] mb-8">Submit Request</button>
+        </div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 17. Claim Success -->
+<div class="wrapper">
+    <div class="screen-label">17. Claim Success</div>
+    <div class="phone flex-col items-center justify-center pt-20">
+         <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+         <div class="relative w-36 h-24 mb-10">
+             <div class="doodle-card w-28 h-16 absolute left-4 transform rotate-n6 flex items-center justify-center shadow-lg">
+                 <div class="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white text-xs">ID</div>
+             </div>
+             <svg class="absolute -top-6 right-0 w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg>
+         </div>
+         
+         <h2 class="text-xl font-bold mb-4">Your Request Is Submitted</h2>
+         <div class="w-6 h-6 rounded-full border border-green-500 flex items-center justify-center text-green-500 mb-8"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+         
+         <p class="text-center text-xs text-gray-500 px-8 mb-6">For now, you can <span class="font-bold text-black">use a different username</span>. If approved, your claimed username will be granted.</p>
+
+         <div class="flex items-center gap-2 mb-10 text-xs text-gray-500">I understand <input type="checkbox" checked class="accent-black"></div>
+
+         <div class="absolute bottom-10 w-full px-6">
+             <button class="w-full bg-white shadow-soft py-4 rounded-full font-bold text-[15px]">Complete</button>
+         </div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- =========================================================================
+     SECTION 4: UPLOAD & FRIENDS
+========================================================================== -->
+
+<!-- 18. Upload Photo (Empty) -->
+<div class="wrapper">
+    <div class="screen-label">18. Upload Empty</div>
+    <div class="phone pt-16 flex flex-col">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="px-6">
+             <div class="w-6 h-6 mb-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></div>
+            <div class="text-center text-xs font-bold uppercase tracking-wide mb-6">Setup Account</div>
+            <div class="flex gap-2 mb-6"><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div></div>
+
+            <h2 class="text-3xl font-bold mb-2">Upload Photo</h2>
+            <p class="text-gray-500 text-sm mb-12">Add a profile photo so people know it is you.</p>
+
+            <div class="flex justify-center mb-12">
+                <div class="relative w-40 h-40">
+                    <div class="w-full h-full rounded-full border-2 border-white bg-gray-100 shadow-sm"></div>
+                    <div class="absolute bottom-2 right-2 w-10 h-10 bg-black rounded-full flex items-center justify-center text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                    </div>
                 </div>
             </div>
-            <button class="btn btn-white">Continue</button>
-        </div>
-        <!-- QWERTY (Identical) -->
-        <div class="qwerty">
-            <div class="qw-row"><div class="qw-key">Q</div><div class="qw-key">W</div><div class="qw-key">E</div><div class="qw-key">R</div><div class="qw-key">T</div><div class="qw-key">Y</div><div class="qw-key">U</div><div class="qw-key">I</div><div class="qw-key">O</div><div class="qw-key">P</div></div>
-            <div class="qw-row" style="padding:0 20px"><div class="qw-key">A</div><div class="qw-key">S</div><div class="qw-key">D</div><div class="qw-key">F</div><div class="qw-key">G</div><div class="qw-key">H</div><div class="qw-key">J</div><div class="qw-key">K</div><div class="qw-key">L</div></div>
-            <div class="qw-row"><div class="qw-key gray"><i class="fas fa-arrow-up"></i></div><div class="qw-key">Z</div><div class="qw-key">X</div><div class="qw-key">C</div><div class="qw-key">V</div><div class="qw-key">B</div><div class="qw-key">N</div><div class="qw-key">M</div><div class="qw-key gray"><i class="fas fa-backspace"></i></div></div>
-            <div class="qw-row"><div class="qw-key gray" style="font-size:14px">123</div><div class="qw-key space">space</div><div class="qw-key blue">Go</div></div>
-        </div>
-        <div class="home-indicator"></div>
-    </div>
 
-    <!-- FRAME 109: Username (Not Available) -->
-    <div class="iphone">
-        <span class="label-tag">Frame 109</span>
-        <div class="status-bar"><span>1:47</span><div class="dynamic-island"></div><div style="display:flex; gap:6px"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
-        <div class="nav-header"><button class="back-btn"><i class="fas fa-arrow-left"></i></button><span class="nav-title">Setup Account</span><div style="width:20px"></div></div>
-        <div class="content">
-            <div class="progress-indicator"><div class="bar-seg active"></div><div class="bar-seg"></div><div class="bar-seg"></div><div class="bar-seg"></div></div>
-            <h1>Your Username</h1>
-            <p class="desc">Create your username and you can change it later.</p>
-            <div class="input-group">
-                <input type="text" class="input-box" value="Kovsk">
-                <i class="fas fa-times-circle input-icon text-red"></i>
-                <div class="helper-text">
-                    <span class="text-red">*Username not available</span>
-                    <span>11/15</span>
+            <button class="w-full bg-white border border-gray-100 shadow-soft py-4 rounded-2xl font-bold mb-3 text-sm">Add Photo</button>
+            <button class="w-full bg-transparent border border-gray-200 py-4 rounded-2xl font-bold text-sm text-gray-500">Maybe Later</button>
+        </div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 19. Upload Photo (Modal) -->
+<div class="wrapper">
+    <div class="screen-label">19. Upload Modal</div>
+    <div class="phone pt-16 flex flex-col bg-gray-200/50">
+         <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <!-- Shadow Overlay -->
+        <div class="absolute inset-0 bg-black/30 z-10"></div>
+        
+        <!-- Bottom Sheet -->
+        <div class="absolute bottom-0 w-full bg-white rounded-t-[30px] p-6 z-20 pb-10">
+            <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
+            <div class="flex gap-4">
+                <div class="flex-1 border border-gray-100 rounded-xl p-6 flex flex-col items-center shadow-sm">
+                    <svg class="w-6 h-6 mb-2 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span class="text-xs font-bold">Take Photo</span>
+                </div>
+                <div class="flex-1 border border-gray-100 rounded-xl p-6 flex flex-col items-center shadow-sm">
+                    <svg class="w-6 h-6 mb-2 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span class="text-xs font-bold">Add from Library</span>
                 </div>
             </div>
-            <button class="btn btn-white" style="color:#ccc; border-color:#f0f0f0">Continue</button>
-            <div style="text-align: center; margin-top: 20px;">
-                <p style="font-size:13px; color:#555; margin-bottom:5px">Are you a brand or influencer?</p>
-                <p style="font-weight:600; font-size:14px">Claim Username</p>
-            </div>
         </div>
-        <div class="qwerty">
-            <div class="qw-row"><div class="qw-key">Q</div><div class="qw-key">W</div><div class="qw-key">E</div><div class="qw-key">R</div><div class="qw-key">T</div><div class="qw-key">Y</div><div class="qw-key">U</div><div class="qw-key">I</div><div class="qw-key">O</div><div class="qw-key">P</div></div>
-            <div class="qw-row" style="padding:0 20px"><div class="qw-key">A</div><div class="qw-key">S</div><div class="qw-key">D</div><div class="qw-key">F</div><div class="qw-key">G</div><div class="qw-key">H</div><div class="qw-key">J</div><div class="qw-key">K</div><div class="qw-key">L</div></div>
-            <div class="qw-row"><div class="qw-key gray"><i class="fas fa-arrow-up"></i></div><div class="qw-key">Z</div><div class="qw-key">X</div><div class="qw-key">C</div><div class="qw-key">V</div><div class="qw-key">B</div><div class="qw-key">N</div><div class="qw-key">M</div><div class="qw-key gray"><i class="fas fa-backspace"></i></div></div>
-            <div class="qw-row"><div class="qw-key gray" style="font-size:14px">123</div><div class="qw-key space">space</div><div class="qw-key blue">Go</div></div>
-        </div>
-        <div class="home-indicator"></div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full z-30"></div>
     </div>
+</div>
 
-    <!-- ================================================================= -->
-    <!-- IMAGE 3: CLAIM & SUBMIT FLOW -->
-    <!-- ================================================================= -->
+<!-- 20. Upload Photo (Filled) -->
+<div class="wrapper">
+    <div class="screen-label">20. Upload Filled</div>
+    <div class="phone pt-16 flex flex-col">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="px-6">
+             <div class="w-6 h-6 mb-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></div>
+            <div class="text-center text-xs font-bold uppercase tracking-wide mb-6">Setup Account</div>
+            <div class="flex gap-2 mb-6"><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div></div>
 
-    <!-- FRAME 173: Claim Form (Empty) -->
-    <div class="iphone">
-        <span class="label-tag">Frame 173</span>
-        <div class="status-bar"><span>1:47</span><div class="dynamic-island"></div><div style="display:flex; gap:6px"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
-        <div class="nav-header"><button class="back-btn"><i class="fas fa-arrow-left"></i></button><span class="nav-title">Claim Username</span><div style="width:20px"></div></div>
-        <div class="content">
-            <h1>Claim Username</h1>
-            <p class="desc" style="margin-bottom:15px">If you are an existing brand or influencer, claim your username here.</p>
-            <div class="input-group">
-                <input type="text" class="input-box" placeholder="Desired Username">
-                <div class="helper-text"><span>*Name should be 15 characters or less</span><span>11/15</span></div>
-            </div>
+            <h2 class="text-3xl font-bold mb-2">Upload Photo</h2>
+            <p class="text-gray-500 text-sm mb-12">Add a profile photo so people know it is you.</p>
 
-            <h3 style="font-size:17px; font-weight:700; margin-bottom:5px">Contact Info</h3>
-            <p class="desc" style="font-size:13px; margin-bottom:15px">Contact information in case we have any questions.<br>Verification may take up to 48 hours.</p>
-
-            <input type="text" class="input-box" style="margin-bottom:10px" placeholder="Enter Website">
-            <input type="text" class="input-box" style="margin-bottom:10px" placeholder="Enter Instagram URL">
-            <input type="text" class="input-box" style="margin-bottom:10px" placeholder="Enter Email Address">
-            <input type="text" class="input-box" style="margin-bottom:10px" placeholder="Enter Phone Number">
-
-            <button class="btn btn-white" style="color:#ccc; border-color:#f0f0f0">Submit Request</button>
-            <p style="text-align:center; font-size:11px; color:#888; line-height:1.4">Read our <strong>Privacy Policy</strong>. Tap "Agree and continue"<br>to accept <strong>Terms of Service</strong>.</p>
-        </div>
-        <div class="home-indicator"></div>
-    </div>
-
-    <!-- FRAME 174: Claim Form (Filled) -->
-    <div class="iphone">
-        <span class="label-tag">Frame 174</span>
-        <div class="status-bar"><span>1:47</span><div class="dynamic-island"></div><div style="display:flex; gap:6px"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
-        <div class="nav-header"><button class="back-btn"><i class="fas fa-arrow-left"></i></button><span class="nav-title">Claim Username</span><div style="width:20px"></div></div>
-        <div class="content">
-            <h1>Claim Username</h1>
-            <p class="desc" style="margin-bottom:15px">If you are an existing brand or influencer, claim your username here.</p>
-            <div class="input-group">
-                <input type="text" class="input-box" value="Kovsk">
-                <div class="helper-text"><span>*Name should be 15 characters or less</span><span>11/15</span></div>
-            </div>
-
-            <h3 style="font-size:17px; font-weight:700; margin-bottom:5px">Contact Info</h3>
-            <p class="desc" style="font-size:13px; margin-bottom:15px">Contact information in case we have any questions.<br>Verification may take up to 48 hours.</p>
-
-            <input type="text" class="input-box" style="margin-bottom:10px" value="kovsk.com">
-            <input type="text" class="input-box" style="margin-bottom:10px" value="instagram.com/kovsk">
-            <input type="text" class="input-box" style="margin-bottom:10px" value="support@kovsk.com">
-            <input type="text" class="input-box" style="margin-bottom:10px" value="+1 242 242 2422">
-
-            <button class="btn btn-white">Submit Request</button>
-            <p style="text-align:center; font-size:11px; color:#888; line-height:1.4">Read our <strong>Privacy Policy</strong>. Tap "Agree and continue"<br>to accept <strong>Terms of Service</strong>.</p>
-        </div>
-        <div class="home-indicator"></div>
-    </div>
-
-    <!-- FRAME 175: Submitted (Unchecked) -->
-    <div class="iphone">
-        <span class="label-tag">Frame 175</span>
-        <div class="status-bar"><span>1:47</span><div class="dynamic-island"></div><div style="display:flex; gap:6px"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
-        <div class="content">
-            <div class="illustration-area" style="padding-bottom:0; justify-content: center; height: 60%;">
-                <!-- ID Badge SVG -->
-                <svg viewBox="0 0 100 100" fill="none" stroke="black" stroke-width="2" style="transform: rotate(-5deg);">
-                    <rect x="25" y="40" width="50" height="35" rx="3" fill="white" />
-                    <!-- Lanyard clip -->
-                    <path d="M45 40 L40 25 L60 25 L55 40" fill="white"/>
-                    <path d="M40 25 L35 15 M60 25 L65 15" stroke-width="3" />
-                    <!-- ID details -->
-                    <circle cx="50" cy="55" r="5" />
-                    <line x1="35" y1="65" x2="65" y2="65" stroke-width="1" />
-                    <!-- Green Badge -->
-                    <circle cx="75" cy="75" r="8" fill="#34C759" stroke="white" stroke-width="2"/>
-                    <path d="M72 75 l2 2 l4 -4" stroke="white" stroke-width="2" />
-                    <!-- Green sparkles -->
-                     <path d="M70 25 l2 -5 l2 5" fill="#34C759" stroke="none"/>
-                     <path d="M80 30 l2 -5 l2 5" fill="#34C759" stroke="none"/>
-                </svg>
-                <div class="status-msg">Your Request Is Submitted</div>
-                <div style="margin-top:10px; color:#34C759; font-size:24px;"><i class="fas fa-check-circle"></i></div>
-            </div>
-
-            <div style="text-align:center; padding-bottom: 30px;">
-                <p style="font-size:13px; color:#888; margin-bottom: 20px; line-height:1.4">For now, you can <strong>use a different username</strong>. If<br>approved, your claimed username will be granted.</p>
-                <div class="checkbox-container">
-                    <span>I understand</span>
-                    <div class="custom-checkbox"></div>
+            <div class="flex justify-center mb-12">
+                <div class="relative w-40 h-40">
+                    <div class="w-full h-full rounded-full border-2 border-white bg-black flex items-center justify-center text-white font-bold text-2xl shadow-sm italic">KOVSK</div>
+                    <div class="absolute bottom-2 right-2 w-10 h-10 bg-black rounded-full flex items-center justify-center text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                    </div>
                 </div>
-                <button class="btn btn-white" style="color:#ccc; border-color:#f0f0f0;">Complete</button>
+            </div>
+
+            <button class="w-full bg-white border border-gray-100 shadow-soft py-4 rounded-2xl font-bold mb-3 text-sm">Continue</button>
+            <button class="w-full bg-transparent border border-gray-200 py-4 rounded-2xl font-bold text-sm text-gray-500">Change Photo</button>
+        </div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 21. Find Friends (Intro) -->
+<div class="wrapper">
+    <div class="screen-label">21. Friends Intro</div>
+    <div class="phone pt-16 flex flex-col">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="px-6 flex-1">
+             <div class="w-6 h-6 mb-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></div>
+            <div class="text-center text-xs font-bold uppercase tracking-wide mb-6">Setup Account</div>
+            <div class="flex gap-2 mb-6"><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div></div>
+
+            <h2 class="text-3xl font-bold mb-2">Find Your Friends</h2>
+            <p class="text-gray-500 text-sm mb-12">Find or invite your friends to RealScroll.</p>
+
+            <div class="flex justify-center mb-10">
+                 <!-- Envelope doodle -->
+                 <div class="relative w-40 h-32">
+                      <div class="doodle-card w-36 h-28 absolute left-2 transform rotate-n6 flex items-center justify-center">
+                          <svg class="w-20 h-20 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                          <div class="absolute -top-3 -right-3 w-10 h-10 bg-black rounded-full border-2 border-white flex items-center justify-center text-white italic font-serif text-lg">@</div>
+                      </div>
+                      <div class="w-4 h-0.5 bg-black absolute top-0 right-0 transform rotate-45"></div>
+                      <div class="w-4 h-0.5 bg-black absolute top-4 -left-2 transform -rotate-45"></div>
+                 </div>
+            </div>
+
+            <button class="w-full bg-white shadow-soft border border-gray-100 py-4 rounded-full font-bold mb-3 text-sm">Find Friends</button>
+            <button class="w-full bg-transparent border border-gray-200 py-4 rounded-full font-bold text-sm text-gray-500">Maybe Later</button>
+        </div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 22. Find Friends (Permission) -->
+<div class="wrapper">
+    <div class="screen-label">22. Permission</div>
+    <div class="phone flex items-center justify-center bg-gray-300">
+         <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+         <!-- Overlay -->
+         <div class="absolute inset-0 bg-black/40 z-10"></div>
+         
+         <!-- Alert Box -->
+         <div class="bg-[#F2F2F2]/90 backdrop-blur w-[270px] rounded-2xl text-center overflow-hidden z-20">
+            <div class="p-5">
+                <h3 class="font-bold text-[17px] mb-1">"RealScroll" Would Like to Access Your Contacts</h3>
+                <p class="text-[13px] leading-tight">RealScroll is better with friends. Discover common interest, and find opportunities to collaborate.</p>
+            </div>
+            <div class="flex border-t border-gray-300/50">
+                <button class="flex-1 py-3 text-[17px] text-[#007AFF] border-r border-gray-300/50">Don't Allow</button>
+                <button class="flex-1 py-3 text-[17px] font-bold text-[#007AFF]">OK</button>
             </div>
         </div>
-        <div class="home-indicator"></div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full z-30"></div>
     </div>
+</div>
 
-    <!-- FRAME 176: Submitted (Checked) -->
-    <div class="iphone">
-        <span class="label-tag">Frame 176</span>
-        <div class="status-bar"><span>1:47</span><div class="dynamic-island"></div><div style="display:flex; gap:6px"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div></div>
-        <div class="content">
-            <div class="illustration-area" style="padding-bottom:0; justify-content: center; height: 60%;">
-                <!-- ID Badge SVG (Same) -->
-                <svg viewBox="0 0 100 100" fill="none" stroke="black" stroke-width="2" style="transform: rotate(-5deg);">
-                    <rect x="25" y="40" width="50" height="35" rx="3" fill="white" />
-                    <path d="M45 40 L40 25 L60 25 L55 40" fill="white"/>
-                    <path d="M40 25 L35 15 M60 25 L65 15" stroke-width="3" />
-                    <circle cx="50" cy="55" r="5" />
-                    <line x1="35" y1="65" x2="65" y2="65" stroke-width="1" />
-                    <circle cx="75" cy="75" r="8" fill="#34C759" stroke="white" stroke-width="2"/>
-                    <path d="M72 75 l2 2 l4 -4" stroke="white" stroke-width="2" />
-                    <path d="M70 25 l2 -5 l2 5" fill="#34C759" stroke="none"/>
-                    <path d="M80 30 l2 -5 l2 5" fill="#34C759" stroke="none"/>
-                </svg>
-                <div class="status-msg">Your Request Is Submitted</div>
-                <div style="margin-top:10px; color:#34C759; font-size:24px;"><i class="fas fa-check-circle"></i></div>
+<!-- 23. Find Friends (Loading) -->
+<div class="wrapper">
+    <div class="screen-label">23. Friends Loading</div>
+    <div class="phone pt-16 flex flex-col">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="px-6 h-full flex flex-col">
+             <div class="w-6 h-6 mb-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></div>
+            <div class="text-center text-xs font-bold uppercase tracking-wide mb-6">Setup Account</div>
+            <div class="flex gap-2 mb-6"><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-gray-200 rounded-full"></div></div>
+
+            <h2 class="text-2xl font-bold mb-2">Find Your Friends</h2>
+            <p class="text-gray-500 text-sm mb-12">Find or invite your friends to RealScroll.</p>
+
+            <div class="flex-1 flex items-center justify-center pb-20">
+                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
             </div>
 
-            <div style="text-align:center; padding-bottom: 30px;">
-                <p style="font-size:13px; color:#888; margin-bottom: 20px; line-height:1.4">For now, you can <strong>use a different username</strong>. If<br>approved, your claimed username will be granted.</p>
-                <div class="checkbox-container">
-                    <span>I understand</span>
-                    <div class="custom-checkbox checked"><i class="fas fa-check"></i></div>
+            <div class="pb-10">
+                 <button class="w-full bg-white shadow-soft py-4 rounded-full font-bold mb-3 text-sm">Find Friends</button>
+                 <button class="w-full bg-transparent py-4 rounded-full font-bold text-sm text-black">Maybe Later</button>
+            </div>
+        </div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
+
+<!-- 24. Find Friends (List) -->
+<div class="wrapper">
+    <div class="screen-label">24. Friends List</div>
+    <div class="phone pt-16 flex flex-col">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="px-6 h-full flex flex-col">
+             <div class="w-6 h-6 mb-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></div>
+            <div class="text-center text-xs font-bold uppercase tracking-wide mb-6">Setup Account</div>
+            <h2 class="text-2xl font-bold mb-6">Find Your Friends</h2>
+            <p class="text-gray-500 text-sm mb-6">Find or invite your friends to RealScroll.</p>
+
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden"><img src="https://i.pravatar.cc/100?img=1" alt="" class="w-full h-full object-cover"></div>
+                        <div><p class="text-sm font-bold flex items-center gap-1">Jakesteel <span class="text-yellow-400 text-[8px]">●</span></p><p class="text-[10px] text-gray-400">Joined 01/24/26</p></div>
+                    </div>
+                    <button class="text-xs border border-gray-200 rounded px-4 py-1.5 font-bold">Follow</button>
                 </div>
-                <button class="btn btn-white">Complete</button>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden"><img src="https://i.pravatar.cc/100?img=2" alt="" class="w-full h-full object-cover"></div>
+                        <div><p class="text-sm font-bold flex items-center gap-1">Jakesteel <span class="text-yellow-400 text-[8px]">●</span></p><p class="text-[10px] text-gray-400">Joined 01/24/26</p></div>
+                    </div>
+                    <button class="text-xs border border-gray-200 rounded px-4 py-1.5 font-bold">Follow</button>
+                </div>
+                 <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden"><img src="https://i.pravatar.cc/100?img=3" alt="" class="w-full h-full object-cover"></div>
+                        <div><p class="text-sm font-bold flex items-center gap-1">Jakesteel <span class="text-yellow-400 text-[8px]">●</span></p><p class="text-[10px] text-gray-400">Joined 01/24/26</p></div>
+                    </div>
+                    <button class="text-xs bg-black text-white rounded px-4 py-1.5 font-bold">Followed</button>
+                </div>
+                 <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden"><img src="https://i.pravatar.cc/100?img=4" alt="" class="w-full h-full object-cover"></div>
+                        <div><p class="text-sm font-bold flex items-center gap-1">Jakesteel <span class="text-yellow-400 text-[8px]">●</span></p><p class="text-[10px] text-gray-400">Joined 01/24/26</p></div>
+                    </div>
+                    <button class="text-xs border border-black bg-black text-white rounded px-4 py-1.5 font-bold">Invited</button>
+                </div>
+            </div>
+
+            <div class="mt-auto pb-10">
+                 <button class="w-full bg-white shadow-soft py-4 rounded-full font-bold mb-3 text-sm">Invite Friends</button>
+                 <button class="w-full bg-transparent py-4 rounded-full font-bold text-sm text-black">Continue</button>
             </div>
         </div>
-        <div class="home-indicator"></div>
+         <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
     </div>
+</div>
+
+<!-- 25. Final Home -->
+<div class="wrapper">
+    <div class="screen-label">25. Final Home</div>
+    <div class="phone pt-16 flex flex-col items-center justify-center px-6">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[36px] bg-black rounded-[20px] z-50"></div>
+        <div class="w-full absolute top-16 px-6">
+             <div class="w-6 h-6 mb-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></div>
+            <div class="text-center text-xs font-bold uppercase tracking-wide mb-6">Setup Account</div>
+            <div class="flex gap-2 mb-6"><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-black rounded-full"></div><div class="h-1 flex-1 bg-black rounded-full"></div></div>
+        </div>
+
+        <div class="relative w-36 h-40 mb-6 mt-10">
+             <div class="w-24 h-32 bg-black rounded-lg absolute left-0 top-4 transform -rotate-12"></div>
+             <div class="doodle-card w-24 h-32 absolute right-2 transform -rotate-6 flex flex-col items-center justify-center shadow-soft">
+                  <div class="w-12 h-12 rounded-full border border-green-500 flex items-center justify-center mb-2"><div class="w-8 h-8 rounded-full border border-dashed border-green-500"></div></div>
+                  <div class="flex gap-2"><div class="w-2 h-2 rounded-full border border-black"></div><div class="w-2 h-2 rounded-full border border-black"></div></div>
+             </div>
+             <!-- Lines -->
+             <div class="w-4 h-0.5 bg-black absolute top-0 left-0 transform rotate-45"></div>
+             <div class="w-4 h-0.5 bg-black absolute bottom-0 right-0 transform rotate-45"></div>
+        </div>
+
+        <h2 class="text-3xl font-bold mb-2 text-center">Create your<br>first real post.</h2>
+        <p class="text-gray-500 text-sm mb-12 text-center px-4">Share a real moment and watch how we verify it before it goes live.</p>
+
+        <button class="w-full bg-white shadow-soft border border-gray-100 py-4 rounded-full font-bold mb-3 text-sm">Create Post</button>
+        <button class="w-full bg-transparent py-4 rounded-full font-bold text-sm text-black">Got to Homepage</button>
+        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black rounded-full"></div>
+    </div>
+</div>
 
 </body>
 </html>

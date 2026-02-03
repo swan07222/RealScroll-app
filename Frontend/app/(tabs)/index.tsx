@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { PostList } from '@/components/post/post-list';
 import { usePosts } from '@/hooks/use-posts';
 import { Loading } from '@/components/ui/loading';
+import { Image } from 'expo-image';
+import { Images } from '@/constants/images';
 
 export default function HomeScreen() {
   const {
@@ -27,7 +29,7 @@ export default function HomeScreen() {
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.logoContainer}>
-        <Ionicons name="cube" size={22} color="#000" />
+        <Image source={Images.appIcon} style={{ width: 22, height: 22 }} contentFit="contain" />
       </View>
     </View>
   );
